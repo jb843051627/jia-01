@@ -26,4 +26,10 @@ public interface ITPetPhotoService extends IService<PetPhoto> {
     public int deletePetPhotoByPetId(Long petId);
 
     public int batchInsertPetPhoto(List<PetPhoto> photos);
+
+    public int deletePetPhotoByIdWithFile(Long id);
+
+    public int deletePetPhotoByIdsWithFile(String ids);
+
+    public int deletePetPhotoByPetIdWithFile(Long petId);
 }

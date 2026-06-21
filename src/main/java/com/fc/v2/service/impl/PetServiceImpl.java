@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fc.v2.common.support.ConvertUtil;
 import com.fc.v2.mapper.auto.PetMapper;
 import com.fc.v2.model.auto.Appointment;
+import com.fc.v2.model.auto.AppointmentStatus;
 import com.fc.v2.model.auto.Pet;
 import com.fc.v2.model.auto.PetPhoto;
 import com.fc.v2.service.ITAppointmentService;
@@ -59,14 +60,14 @@ public class PetServiceImpl extends ServiceImpl<PetMapper, Pet> implements ITPet
         String[] idsArray = ConvertUtil.toStrArray(ids);
         for (String id : idsArray) {
             Long petId = Long.parseLong(id);
-            petPhotoService.deletePetPhotoByPetId(petId);
+            petPhotoService.deletePetPhotoByPetIdWithFile(petId);
         }
         return this.baseMapper.deleteBatchIds(Arrays.asList(idsArray));
     }
 
     @Override
     public int deletePetById(Long id) {
-        petPhotoService.deletePetPhotoByPetId(id);
+        petPhotoService.deletePetPhotoByPetIdWithFile(id);
         return this.baseMapper.deleteById(id);
     }
 
@@ -78,7 +79,7 @@ public class PetServiceImpl extends ServiceImpl<PetMapper, Pet> implements ITPet
             pet.setPhotos(photos);
             List<Appointment> serviceRecords = appointmentService.selectAppointmentByPetId(id);
             for (Appointment appointment : serviceRecords) {
-                appointment.setStatusName(getStatusName(appointment.getStatus()));
+                appointment.setStatusName(AppointmentStatus.getNameByCode(appointment.getStatus()));
             }
             pet.setServiceRecords(serviceRecords);
         }
@@ -90,16 +91,5 @@ public class PetServiceImpl extends ServiceImpl<PetMapper, Pet> implements ITPet
         PageHelper.startPage(pageNum, pageSize);
         List<Pet> list = petMapper.selectPetList(pet);
         return new PageInfo<>(list);
-    }
-
-    private String getStatusName(String status) {
-        switch (status) {
-            case "0": return "待确认";
-            case "1": return "已确认";
-            case "2": return "服务中";
-            case "3": return "已完成";
-            case "4": return "已取消";
-            default: return "未知";
-        }
     }
 }

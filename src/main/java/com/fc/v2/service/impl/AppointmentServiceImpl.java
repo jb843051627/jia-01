@@ -11,6 +11,7 @@ import com.fc.v2.common.domain.AjaxResult;
 import com.fc.v2.common.support.ConvertUtil;
 import com.fc.v2.mapper.auto.AppointmentMapper;
 import com.fc.v2.model.auto.Appointment;
+import com.fc.v2.model.auto.AppointmentStatus;
 import com.fc.v2.model.auto.ServiceType;
 import com.fc.v2.service.ITAppointmentService;
 import com.fc.v2.service.ITServiceTypeService;
@@ -38,10 +39,10 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
     }
 
     @Override
-    public List<Appointment> selectAppointmentList(Appointment appointment) {
-        List<Appointment> list = appointmentMapper.selectAppointmentList(appointment);
+    public List<Appointment> selectAppointmentList(Appointment appointment, Date startDate, Date endDate) {
+        List<Appointment> list = appointmentMapper.selectAppointmentList(appointment, startDate, endDate);
         for (Appointment item : list) {
-            item.setStatusName(getStatusName(item.getStatus()));
+            item.setStatusName(AppointmentStatus.getNameByCode(item.getStatus()));
         }
         return list;
     }
@@ -128,7 +129,7 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
     public Appointment selectAppointmentDetailById(Long id) {
         Appointment appointment = appointmentMapper.selectAppointmentDetailById(id);
         if (appointment != null) {
-            appointment.setStatusName(getStatusName(appointment.getStatus()));
+            appointment.setStatusName(AppointmentStatus.getNameByCode(appointment.getStatus()));
         }
         return appointment;
     }
@@ -156,9 +157,9 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
         appointment.setId(id);
         appointment.setStatus(status);
 
-        if ("2".equals(status)) {
+        if (AppointmentStatus.SERVING.getCode().equals(status)) {
             appointment.setActualStartTime(new Date());
-        } else if ("3".equals(status)) {
+        } else if (AppointmentStatus.COMPLETED.getCode().equals(status)) {
             appointment.setActualEndTime(new Date());
         }
 
@@ -167,16 +168,5 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
             return AjaxResult.success("状态更新成功");
         }
         return AjaxResult.error("状态更新失败");
-    }
-
-    private String getStatusName(String status) {
-        switch (status) {
-            case "0": return "待确认";
-            case "1": return "已确认";
-            case "2": return "服务中";
-            case "3": return "已完成";
-            case "4": return "已取消";
-            default: return "未知";
-        }
     }
 }

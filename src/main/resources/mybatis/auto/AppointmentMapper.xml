@@ -43,14 +43,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </where>
     </select>
 
-    <select id="selectAppointmentList" resultMap="AppointmentResult" parameterType="com.fc.v2.model.auto.Appointment">
+    <select id="selectAppointmentList" resultMap="AppointmentResult">
         <include refid="selectAppointmentVo"/>
         <where>  
-            <if test="petId != null "> and a.pet_id = #{petId}</if>
-            <if test="customerName != null  and customerName != ''"> and a.customer_name like concat('%', #{customerName}, '%')</if>
-            <if test="customerPhone != null  and customerPhone != ''"> and a.customer_phone = #{customerPhone}</if>
-            <if test="status != null  and status != ''"> and a.status = #{status}</if>
-            <if test="appointmentTime != null"> and date(a.appointment_time) = date(#{appointmentTime})</if>
+            <if test="param1.petId != null "> and a.pet_id = #{param1.petId}</if>
+            <if test="param1.customerName != null  and param1.customerName != ''"> and a.customer_name like concat('%', #{param1.customerName}, '%')</if>
+            <if test="param1.customerPhone != null  and param1.customerPhone != ''"> and a.customer_phone = #{param1.customerPhone}</if>
+            <if test="param1.status != null  and param1.status != ''"> and a.status = #{param1.status}</if>
+            <if test="param2 != null"> and a.appointment_time <![CDATA[ >= ]]> #{param2}</if>
+            <if test="param3 != null"> and a.appointment_time <![CDATA[ <= ]]> date_add(#{param3}, interval 1 day)</if>
         </where>
         order by a.appointment_time desc
     </select>

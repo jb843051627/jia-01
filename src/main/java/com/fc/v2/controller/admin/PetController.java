@@ -15,6 +15,7 @@ import com.fc.v2.util.file.FileUploadUtils;
 import com.github.pagehelper.PageInfo;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -41,6 +42,7 @@ public class PetController extends BaseController {
 
     @ApiOperation(value = "宠物列表跳转", notes = "宠物列表跳转")
     @GetMapping("/view")
+    @RequiresPermissions("system:pet:view")
     public String view(ModelMap model) {
         return prefix + "/list";
     }
@@ -48,6 +50,7 @@ public class PetController extends BaseController {
     @Log(title = "宠物列表查询", action = "list")
     @ApiOperation(value = "宠物列表查询", notes = "宠物列表查询")
     @GetMapping("/list")
+    @RequiresPermissions("system:pet:list")
     @ResponseBody
     public ResultTable list(Pet pet) {
         startPage();
@@ -58,6 +61,7 @@ public class PetController extends BaseController {
 
     @ApiOperation(value = "新增宠物跳转", notes = "新增宠物跳转")
     @GetMapping("/add")
+    @RequiresPermissions("system:pet:add")
     public String add(ModelMap modelMap) {
         return prefix + "/add";
     }
@@ -65,6 +69,7 @@ public class PetController extends BaseController {
     @Log(title = "新增宠物", action = "add")
     @ApiOperation(value = "新增宠物", notes = "新增宠物")
     @PostMapping("/add")
+    @RequiresPermissions("system:pet:add")
     @ResponseBody
     public AjaxResult add(Pet pet) {
         return toAjax(petService.insertPet(pet));
@@ -73,6 +78,7 @@ public class PetController extends BaseController {
     @Log(title = "删除宠物", action = "remove")
     @ApiOperation(value = "删除宠物", notes = "删除宠物")
     @DeleteMapping("/remove")
+    @RequiresPermissions("system:pet:remove")
     @ResponseBody
     public AjaxResult remove(String ids) {
         return toAjax(petService.deletePetByIds(ids));
@@ -80,6 +86,7 @@ public class PetController extends BaseController {
 
     @ApiOperation(value = "修改宠物跳转", notes = "修改宠物跳转")
     @GetMapping("/edit/{id}")
+    @RequiresPermissions("system:pet:edit")
     public String edit(@PathVariable("id") Long id, ModelMap mmap) {
         Pet pet = petService.selectPetById(id);
         List<PetPhoto> photos = petPhotoService.selectPetPhotoByPetId(id);
@@ -91,6 +98,7 @@ public class PetController extends BaseController {
     @Log(title = "修改宠物", action = "edit")
     @ApiOperation(value = "修改宠物", notes = "修改宠物")
     @PostMapping("/edit")
+    @RequiresPermissions("system:pet:edit")
     @ResponseBody
     public AjaxResult editSave(Pet pet) {
         return toAjax(petService.updatePet(pet));
@@ -115,6 +123,7 @@ public class PetController extends BaseController {
     @Log(title = "上传宠物照片", action = "upload")
     @ApiOperation(value = "上传宠物照片", notes = "上传宠物照片")
     @PostMapping("/uploadPhoto")
+    @RequiresPermissions("system:pet:upload")
     @ResponseBody
     public AjaxResult uploadPhoto(@RequestParam("petId") Long petId, @RequestParam("file") MultipartFile file) {
         try {
@@ -136,9 +145,10 @@ public class PetController extends BaseController {
     @Log(title = "删除宠物照片", action = "remove")
     @ApiOperation(value = "删除宠物照片", notes = "删除宠物照片")
     @DeleteMapping("/removePhoto")
+    @RequiresPermissions("system:pet:deletePhoto")
     @ResponseBody
     public AjaxResult removePhoto(Long id) {
-        return toAjax(petPhotoService.deletePetPhotoById(id));
+        return toAjax(petPhotoService.deletePetPhotoByIdWithFile(id));
     }
 
     @ApiOperation(value = "获取宠物照片列表", notes = "获取宠物照片列表")

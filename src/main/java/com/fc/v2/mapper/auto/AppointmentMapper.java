@@ -9,7 +9,7 @@ public interface AppointmentMapper extends BaseMapper<Appointment> {
 
     public Appointment selectAppointmentById(Long id);
 
-    public List<Appointment> selectAppointmentList(Appointment appointment);
+    public List<Appointment> selectAppointmentList(Appointment appointment, Date startDate, Date endDate);
 
     public Appointment selectAppointmentDetailById(Long id);
 

@@ -13,7 +13,7 @@ public interface ITAppointmentService extends IService<Appointment> {
 
     public List<Appointment> selectAppointmentList(Wrapper<Appointment> queryWrapper);
 
-    public List<Appointment> selectAppointmentList(Appointment appointment);
+    public List<Appointment> selectAppointmentList(Appointment appointment, java.util.Date startDate, java.util.Date endDate);
 
     public AjaxResult insertAppointment(Appointment appointment);
 
