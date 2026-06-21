@@ -308,11 +308,10 @@
                     html += '<div class="node-remark">' + node.remark + '</div>';
                 }
 
-                if (node.photoUrl) {
-                    var photos = node.photoUrl.split(',');
+                if (node.photos && node.photos.length > 0) {
                     html += '<div class="node-photos">';
-                    for (var j = 0; j < photos.length; j++) {
-                        html += '<img src="' + photos[j] + '" onclick="previewPhoto(this.src)">';
+                    for (var j = 0; j < node.photos.length; j++) {
+                        html += '<img src="' + node.photos[j].photoUrl + '" onclick="previewPhoto(this.src)">';
                     }
                     html += '</div>';
                 }
