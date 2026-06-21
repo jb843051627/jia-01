@@ -119,4 +119,12 @@ public class V2Config
 	{
 		return this.profile+ "/upload";
 	}
+
+	/**
+	 * 获取宠物照片上传路径
+	 */
+	public String getPetPhotoPath()
+	{
+		return this.profile + "/petPhoto";
+	}
 }

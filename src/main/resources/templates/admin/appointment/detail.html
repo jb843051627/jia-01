@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('预约详情')"/>
+    <style>
+        .detail-card {
+            background: #fff;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .detail-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .detail-item {
+            margin-bottom: 10px;
+            display: flex;
+        }
+        .detail-label {
+            width: 120px;
+            color: #666;
+            flex-shrink: 0;
+        }
+        .detail-value {
+            color: #333;
+            flex: 1;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .status-0 { background: #fff3cd; color: #856404; }
+        .status-1 { background: #cce5ff; color: #004085; }
+        .status-2 { background: #f8d7da; color: #721c24; }
+        .status-3 { background: #d4edda; color: #155724; }
+        .status-4 { background: #e2e3e5; color: #383d41; }
+    </style>
+</head>
+<body class="pear-container">
+<div class="detail-card">
+    <div class="detail-title">预约信息</div>
+    <div class="layui-row">
+        <div class="layui-col-md6">
+            <div class="detail-item">
+                <span class="detail-label">预约单号：</span>
+                <span class="detail-value" th:text="${appointment.appointmentNo}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">客户姓名：</span>
+                <span class="detail-value" th:text="${appointment.customerName}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">客户电话：</span>
+                <span class="detail-value" th:text="${appointment.customerPhone}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">宠物名称：</span>
+                <span class="detail-value" th:text="${appointment.petName}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">服务类型：</span>
+                <span class="detail-value" th:text="${appointment.serviceName}"></span>
+            </div>
+        </div>
+        <div class="layui-col-md6">
+            <div class="detail-item">
+                <span class="detail-label">预约时间：</span>
+                <span class="detail-value" th:text="${#dates.format(appointment.appointmentTime, 'yyyy-MM-dd HH:mm:ss')}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">预计结束：</span>
+                <span class="detail-value" th:text="${#dates.format(appointment.endTime, 'yyyy-MM-dd HH:mm:ss')}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">实际开始：</span>
+                <span class="detail-value" th:text="${appointment.actualStartTime} ? ${#dates.format(appointment.actualStartTime, 'yyyy-MM-dd HH:mm:ss')} : '未开始'"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">实际结束：</span>
+                <span class="detail-value" th:text="${appointment.actualEndTime} ? ${#dates.format(appointment.actualEndTime, 'yyyy-MM-dd HH:mm:ss')} : '未结束'"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">金额：</span>
+                <span class="detail-value" style="color: #f56c6c; font-weight: bold;" th:text="'¥' + ${appointment.amount}"></span>
+            </div>
+        </div>
+    </div>
+    <div class="layui-row">
+        <div class="layui-col-md6">
+            <div class="detail-item">
+                <span class="detail-label">状态：</span>
+                <span class="detail-value">
+                    <span class="status-badge" th:class="'status-' + ${appointment.status}" th:text="${appointment.statusName}"></span>
+                </span>
+            </div>
+        </div>
+        <div class="layui-col-md6">
+            <div class="detail-item">
+                <span class="detail-label">创建时间：</span>
+                <span class="detail-value" th:text="${#dates.format(appointment.createTime, 'yyyy-MM-dd HH:mm:ss')}"></span>
+            </div>
+        </div>
+    </div>
+    <div class="detail-item" style="margin-top: 20px;">
+        <span class="detail-label">备注：</span>
+        <span class="detail-value" th:text="${appointment.remark} ?: '无'"></span>
+    </div>
+</div>
+</body>
+<th:block th:include="include :: footer"/>
+</html>

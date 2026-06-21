@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fc.v2.mapper.auto.AppointmentMapper">
+
+    <resultMap type="com.fc.v2.model.auto.Appointment" id="AppointmentResult">
+        <result property="id"    column="id"    />
+        <result property="appointmentNo"    column="appointment_no"    />
+        <result property="petId"    column="pet_id"    />
+        <result property="serviceTypeId"    column="service_type_id"    />
+        <result property="customerName"    column="customer_name"    />
+        <result property="customerPhone"    column="customer_phone"    />
+        <result property="appointmentTime"    column="appointment_time"    />
+        <result property="endTime"    column="end_time"    />
+        <result property="status"    column="status"    />
+        <result property="actualStartTime"    column="actual_start_time"    />
+        <result property="actualEndTime"    column="actual_end_time"    />
+        <result property="amount"    column="amount"    />
+        <result property="remark"    column="remark"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="petName"    column="pet_name"    />
+        <result property="serviceName"    column="service_name"    />
+    </resultMap>
+
+    <sql id="selectAppointmentVo">
+        select a.id, a.appointment_no, a.pet_id, a.service_type_id, a.customer_name, a.customer_phone, 
+               a.appointment_time, a.end_time, a.status, a.actual_start_time, a.actual_end_time, 
+               a.amount, a.remark, a.create_by, a.create_time, a.update_by, a.update_time,
+               p.name as pet_name, s.name as service_name
+        from t_appointment a
+        left join t_pet p on a.pet_id = p.id
+        left join t_service_type s on a.service_type_id = s.id
+    </sql>
+
+    <select id="selectAppointmentById" resultMap="AppointmentResult" parameterType="Long">
+        <include refid="selectAppointmentVo"/>
+        <where>  
+            a.id = #{id}
+        </where>
+    </select>
+
+    <select id="selectAppointmentList" resultMap="AppointmentResult" parameterType="com.fc.v2.model.auto.Appointment">
+        <include refid="selectAppointmentVo"/>
+        <where>  
+            <if test="petId != null "> and a.pet_id = #{petId}</if>
+            <if test="customerName != null  and customerName != ''"> and a.customer_name like concat('%', #{customerName}, '%')</if>
+            <if test="customerPhone != null  and customerPhone != ''"> and a.customer_phone = #{customerPhone}</if>
+            <if test="status != null  and status != ''"> and a.status = #{status}</if>
+            <if test="appointmentTime != null"> and date(a.appointment_time) = date(#{appointmentTime})</if>
+        </where>
+        order by a.appointment_time desc
+    </select>
+
+    <select id="selectAppointmentDetailById" resultMap="AppointmentResult" parameterType="Long">
+        <include refid="selectAppointmentVo"/>
+        <where>  
+            a.id = #{id}
+        </where>
+    </select>
+
+    <select id="checkTimeConflict" resultMap="AppointmentResult">
+        <include refid="selectAppointmentVo"/>
+        <where>  
+            a.status != '4'
+            and a.appointment_time &lt; #{endTime}
+            and a.end_time &gt; #{startTime}
+            <if test="excludeId != null"> and a.id != #{excludeId}</if>
+        </where>
+    </select>
+
+    <select id="selectAppointmentByPetId" resultMap="AppointmentResult" parameterType="Long">
+        <include refid="selectAppointmentVo"/>
+        <where>  
+            a.pet_id = #{petId}
+        </where>
+        order by a.appointment_time desc
+    </select>
+
+</mapper>

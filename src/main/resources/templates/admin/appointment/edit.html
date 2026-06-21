@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('修改预约')"/>
+</head>
+<body>
+<form class="layui-form">
+    <div class="mainBox">
+        <div class="main-container">
+            <input type="hidden" name="id" th:value="${appointment.id}">
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">预约单号</label>
+                <div class="layui-input-block">
+                    <input type="text" class="layui-input" th:value="${appointment.appointmentNo}" readonly>
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">选择宠物<span style="color: red;">*</span></label>
+                <div class="layui-input-block">
+                    <select name="petId" lay-verify="required" required>
+                        <option value="">请选择宠物</option>
+                        <option th:each="pet : ${petList}" th:value="${pet.id}" th:text="${pet.name} + ' - ' + ${pet.ownerName}" th:selected="${pet.id == appointment.petId}"></option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">服务类型<span style="color: red;">*</span></label>
+                <div class="layui-input-block">
+                    <select name="serviceTypeId" lay-verify="required" required id="serviceTypeSelect">
+                        <option value="">请选择服务类型</option>
+                        <option th:each="service : ${serviceTypeList}" th:value="${service.id}" th:text="${service.name} + ' - ¥' + ${service.price} + ' (' + ${service.duration} + '分钟)'" th:data-duration="${service.duration}" th:selected="${service.id == appointment.serviceTypeId}"></option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">客户姓名<span style="color: red;">*</span></label>
+                <div class="layui-input-block">
+                    <input type="text" name="customerName" autocomplete="off" placeholder="请输入客户姓名" class="layui-input" lay-verify="required" required th:value="${appointment.customerName}">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">客户电话<span style="color: red;">*</span></label>
+                <div class="layui-input-block">
+                    <input type="text" name="customerPhone" autocomplete="off" placeholder="请输入客户电话" class="layui-input" lay-verify="required|phone" required th:value="${appointment.customerPhone}">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">预约时间<span style="color: red;">*</span></label>
+                <div class="layui-input-block">
+                    <input type="text" name="appointmentTime" id="appointmentTime" autocomplete="off" placeholder="请选择预约时间" class="layui-input" lay-verify="required" required readonly th:value="${#dates.format(appointment.appointmentTime, 'yyyy-MM-dd HH:mm:ss')}">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">预计结束时间</label>
+                <div class="layui-input-block">
+                    <input type="text" id="endTimeShow" autocomplete="off" class="layui-input" readonly th:value="${#dates.format(appointment.endTime, 'yyyy-MM-dd HH:mm:ss')}">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">状态</label>
+                <div class="layui-input-block">
+                    <select name="status">
+                        <option value="0" th:selected="${appointment.status == '0'}">待确认</option>
+                        <option value="1" th:selected="${appointment.status == '1'}">已确认</option>
+                        <option value="2" th:selected="${appointment.status == '2'}">服务中</option>
+                        <option value="3" th:selected="${appointment.status == '3'}">已完成</option>
+                        <option value="4" th:selected="${appointment.status == '4'}">已取消</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">备注</label>
+                <div class="layui-input-block">
+                    <textarea name="remark" placeholder="请输入备注" class="layui-textarea" th:text="${appointment.remark}"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="bottom">
+        <div class="button-container">
+            <button type="submit" class="layui-btn layui-btn-normal layui-btn-sm" lay-submit="" lay-filter="appointment-edit">
+                <i class="layui-icon layui-icon-ok"></i>
+                保存
+            </button>
+            <button type="button" class="layui-btn layui-btn-primary layui-btn-sm" onclick="parent.layer.close(parent.layer.getFrameIndex(window.name))">
+                <i class="layui-icon layui-icon-close"></i>
+                取消
+            </button>
+        </div>
+    </div>
+</form>
+<th:block th:include="include :: footer"/>
+<script>
+    layui.use(['form', 'jquery', 'laydate'], function () {
+        let form = layui.form;
+        let $ = layui.jquery;
+        let laydate = layui.laydate;
+        let MODULE_PATH = rootPath + "/AppointmentController";
+        let appointmentId = [[${appointment.id}]];
+
+        form.render();
+
+        laydate.render({
+            elem: '#appointmentTime',
+            type: 'datetime',
+            format: 'yyyy-MM-dd HH:mm:ss',
+            min: 0,
+            done: function(value, date) {
+                calculateEndTime();
+            }
+        });
+
+        form.on('select', function(data) {
+            if (data.elem.name === 'serviceTypeId') {
+                calculateEndTime();
+            }
+        });
+
+        function calculateEndTime() {
+            let appointmentTime = $('#appointmentTime').val();
+            let serviceTypeId = $('#serviceTypeSelect').val();
+
+            if (appointmentTime && serviceTypeId) {
+                let duration = $('#serviceTypeSelect option:selected').data('duration');
+                if (duration) {
+                    let startTime = new Date(appointmentTime.replace(/-/g, '/'));
+                    let endTime = new Date(startTime.getTime() + duration * 60 * 1000);
+                    $('#endTimeShow').val(formatDate(endTime));
+                }
+            }
+        }
+
+        function formatDate(date) {
+            let y = date.getFullYear();
+            let m = String(date.getMonth() + 1).padStart(2, '0');
+            let d = String(date.getDate()).padStart(2, '0');
+            let h = String(date.getHours()).padStart(2, '0');
+            let min = String(date.getMinutes()).padStart(2, '0');
+            let s = String(date.getSeconds()).padStart(2, '0');
+            return y + '-' + m + '-' + d + ' ' + h + ':' + min + ':' + s;
+        }
+
+        form.verify({
+            phone: function(value){
+                if(!/^1[3-9]\d{9}$/.test(value)){
+                    return '请输入正确的手机号码';
+                }
+            }
+        });
+
+        form.on('submit(appointment-edit)', function (data) {
+            let loading = layer.load();
+            $.ajax({
+                url: MODULE_PATH + '/edit',
+                data: data.field,
+                dataType: 'json',
+                contentType: 'application/x-www-form-urlencoded',
+                type: 'post',
+                success: function (result) {
+                    layer.close(loading);
+                    if (result.code == 200) {
+                        layer.msg(result.msg, {icon: 1, time: 1000}, function () {
+                            parent.layer.close(parent.layer.getFrameIndex(window.name));
+                            parent.layui.table.reload("appointment-table");
+                        });
+                    } else {
+                        layer.msg(result.msg, {icon: 2, time: 1000});
+                    }
+                }
+            })
+            return false;
+        });
+    })
+</script>
+</body>
+</html>

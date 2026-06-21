@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('新增宠物')"/>
+</head>
+<body>
+<form class="layui-form">
+    <div class="mainBox">
+        <div class="main-container">
+            <div class="layui-form-item">
+                <label class="layui-form-label">宠物名字<span style="color: red;">*</span></label>
+                <div class="layui-input-block">
+                    <input type="text" name="name" autocomplete="off" placeholder="请输入宠物名字" class="layui-input" lay-verify="required" required>
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">品种<span style="color: red;">*</span></label>
+                <div class="layui-input-block">
+                    <input type="text" name="breed" autocomplete="off" placeholder="请输入品种" class="layui-input" lay-verify="required" required>
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">年龄</label>
+                <div class="layui-input-block">
+                    <input type="number" name="age" autocomplete="off" placeholder="请输入年龄" class="layui-input">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">性别<span style="color: red;">*</span></label>
+                <div class="layui-input-block">
+                    <input type="radio" name="gender" value="0" title="公" lay-filter="gender" checked>
+                    <input type="radio" name="gender" value="1" title="母" lay-filter="gender">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">主人姓名<span style="color: red;">*</span></label>
+                <div class="layui-input-block">
+                    <input type="text" name="ownerName" autocomplete="off" placeholder="请输入主人姓名" class="layui-input" lay-verify="required" required>
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">主人电话</label>
+                <div class="layui-input-block">
+                    <input type="text" name="ownerPhone" autocomplete="off" placeholder="请输入主人电话" class="layui-input">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">备注</label>
+                <div class="layui-input-block">
+                    <textarea name="remark" placeholder="请输入备注" class="layui-textarea"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="bottom">
+        <div class="button-container">
+            <button type="submit" class="layui-btn layui-btn-normal layui-btn-sm" lay-submit="" lay-filter="pet-save">
+                <i class="layui-icon layui-icon-ok"></i>
+                提交
+            </button>
+            <button type="reset" class="layui-btn layui-btn-primary layui-btn-sm">
+                <i class="layui-icon layui-icon-refresh"></i>
+                重置
+            </button>
+        </div>
+    </div>
+</form>
+<th:block th:include="include :: footer"/>
+<script>
+    layui.use(['form', 'jquery'], function () {
+        let form = layui.form;
+        let $ = layui.jquery;
+        let MODULE_PATH = rootPath + "/PetController";
+
+        form.render();
+
+        form.on('submit(pet-save)', function (data) {
+            $.ajax({
+                url: MODULE_PATH + '/add',
+                data: data.field,
+                dataType: 'json',
+                contentType: 'application/x-www-form-urlencoded',
+                type: 'post',
+                success: function (result) {
+                    if (result.code == 200) {
+                        layer.msg(result.msg, {icon: 1, time: 1000}, function () {
+                            parent.layer.close(parent.layer.getFrameIndex(window.name));
+                            parent.layui.table.reload("pet-table");
+                        });
+                    } else {
+                        layer.msg(result.msg, {icon: 2, time: 1000});
+                    }
+                }
+            })
+            return false;
+        });
+    })
+</script>
+</body>
+</html>

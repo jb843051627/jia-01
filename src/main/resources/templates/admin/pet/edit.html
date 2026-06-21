@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('修改宠物')"/>
+    <style>
+        .photo-item {
+            position: relative;
+            display: inline-block;
+            margin: 10px;
+            width: 120px;
+            height: 120px;
+        }
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .photo-item .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 24px;
+            height: 24px;
+            line-height: 24px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .upload-btn {
+            width: 120px;
+            height: 120px;
+            border: 2px dashed #ddd;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin: 10px;
+            vertical-align: top;
+        }
+        .upload-btn:hover {
+            border-color: #16baaa;
+            color: #16baaa;
+        }
+    </style>
+</head>
+<body>
+<form class="layui-form">
+    <div class="mainBox">
+        <div class="main-container">
+            <input type="hidden" name="id" th:value="${pet.id}">
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">宠物名字<span style="color: red;">*</span></label>
+                <div class="layui-input-block">
+                    <input type="text" name="name" autocomplete="off" placeholder="请输入宠物名字" class="layui-input" lay-verify="required" required th:value="${pet.name}">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">品种<span style="color: red;">*</span></label>
+                <div class="layui-input-block">
+                    <input type="text" name="breed" autocomplete="off" placeholder="请输入品种" class="layui-input" lay-verify="required" required th:value="${pet.breed}">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">年龄</label>
+                <div class="layui-input-block">
+                    <input type="number" name="age" autocomplete="off" placeholder="请输入年龄" class="layui-input" th:value="${pet.age}">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">性别<span style="color: red;">*</span></label>
+                <div class="layui-input-block">
+                    <input type="radio" name="gender" value="0" title="公" lay-filter="gender" th:checked="${pet.gender == '0'}">
+                    <input type="radio" name="gender" value="1" title="母" lay-filter="gender" th:checked="${pet.gender == '1'}">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">主人姓名<span style="color: red;">*</span></label>
+                <div class="layui-input-block">
+                    <input type="text" name="ownerName" autocomplete="off" placeholder="请输入主人姓名" class="layui-input" lay-verify="required" required th:value="${pet.ownerName}">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">主人电话</label>
+                <div class="layui-input-block">
+                    <input type="text" name="ownerPhone" autocomplete="off" placeholder="请输入主人电话" class="layui-input" th:value="${pet.ownerPhone}">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">宠物照片</label>
+                <div class="layui-input-block">
+                    <div id="photoContainer">
+                        <div class="photo-item" th:each="photo : ${photos}" th:data-id="${photo.id}">
+                            <img th:src="${photo.photoUrl}" alt="宠物照片">
+                            <span class="delete-btn" onclick="deletePhoto(this, ${photo.id})">×</span>
+                        </div>
+                        <div class="upload-btn" onclick="document.getElementById('photoInput').click()">
+                            <i class="layui-icon layui-icon-add-1" style="font-size: 30px;"></i>
+                        </div>
+                    </div>
+                    <input type="file" id="photoInput" style="display: none;" accept="image/*" onchange="uploadPhoto(this)">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">备注</label>
+                <div class="layui-input-block">
+                    <textarea name="remark" placeholder="请输入备注" class="layui-textarea" th:text="${pet.remark}"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="bottom">
+        <div class="button-container">
+            <button type="submit" class="layui-btn layui-btn-normal layui-btn-sm" lay-submit="" lay-filter="pet-edit">
+                <i class="layui-icon layui-icon-ok"></i>
+                保存
+            </button>
+            <button type="button" class="layui-btn layui-btn-primary layui-btn-sm" onclick="parent.layer.close(parent.layer.getFrameIndex(window.name))">
+                <i class="layui-icon layui-icon-close"></i>
+                取消
+            </button>
+        </div>
+    </div>
+</form>
+<th:block th:include="include :: footer"/>
+<script>
+    layui.use(['form', 'jquery'], function () {
+        let form = layui.form;
+        let $ = layui.jquery;
+        let MODULE_PATH = rootPath + "/PetController";
+        let petId = [[${pet.id}]];
+
+        form.render();
+
+        form.on('submit(pet-edit)', function (data) {
+            $.ajax({
+                url: MODULE_PATH + '/edit',
+                data: data.field,
+                dataType: 'json',
+                contentType: 'application/x-www-form-urlencoded',
+                type: 'post',
+                success: function (result) {
+                    if (result.code == 200) {
+                        layer.msg(result.msg, {icon: 1, time: 1000}, function () {
+                            parent.layer.close(parent.layer.getFrameIndex(window.name));
+                            parent.layui.table.reload("pet-table");
+                        });
+                    } else {
+                        layer.msg(result.msg, {icon: 2, time: 1000});
+                    }
+                }
+            })
+            return false;
+        });
+
+        window.uploadPhoto = function (input) {
+            let file = input.files[0];
+            if (!file) return;
+
+            let formData = new FormData();
+            formData.append('petId', petId);
+            formData.append('file', file);
+
+            let loading = layer.load();
+            $.ajax({
+                url: MODULE_PATH + '/uploadPhoto',
+                data: formData,
+                dataType: 'json',
+                processData: false,
+                contentType: false,
+                type: 'post',
+                success: function (result) {
+                    layer.close(loading);
+                    if (result.code == 200) {
+                        layer.msg('上传成功', {icon: 1, time: 1000});
+                        location.reload();
+                    } else {
+                        layer.msg(result.msg, {icon: 2, time: 1000});
+                    }
+                },
+                error: function () {
+                    layer.close(loading);
+                    layer.msg('上传失败', {icon: 2, time: 1000});
+                }
+            });
+            input.value = '';
+        }
+
+        window.deletePhoto = function (obj, photoId) {
+            layer.confirm('确定要删除这张照片吗？', {icon: 3, title: '提示'}, function (index) {
+                layer.close(index);
+                let loading = layer.load();
+                $.ajax({
+                    url: MODULE_PATH + '/removePhoto?id=' + photoId,
+                    dataType: 'json',
+                    type: 'delete',
+                    success: function (result) {
+                        layer.close(loading);
+                        if (result.code == 200) {
+                            layer.msg('删除成功', {icon: 1, time: 1000}, function () {
+                                $(obj).parent().remove();
+                            });
+                        } else {
+                            layer.msg(result.msg, {icon: 2, time: 1000});
+                        }
+                    }
+                })
+            });
+        }
+    })
+</script>
+</body>
+</html>

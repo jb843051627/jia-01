@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('宠物列表')"/>
+</head>
+<body class="pear-container">
+<div class="layui-card">
+    <div class="layui-card-body">
+        <form class="layui-form" action="">
+            <div class="layui-form-item">
+                <label class="layui-form-label">宠物名字</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="name" placeholder="请输入宠物名字" class="layui-input">
+                </div>
+
+                <label class="layui-form-label">品种</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="breed" placeholder="请输入品种" class="layui-input">
+                </div>
+
+                <label class="layui-form-label">主人姓名</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="ownerName" placeholder="请输入主人姓名" class="layui-input">
+                </div>
+
+                <button class="pear-btn pear-btn-md pear-btn-primary" lay-submit lay-filter="pet-query">
+                    <i class="layui-icon layui-icon-search"></i>
+                    查询
+                </button>
+                <button type="reset" class="pear-btn pear-btn-md">
+                    <i class="layui-icon layui-icon-refresh"></i>
+                    重置
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="layui-card">
+    <div class="layui-card-body">
+        <table id="pet-table" lay-filter="pet-table"></table>
+    </div>
+</div>
+</body>
+
+<script type="text/html" id="pet-toolbar">
+    <button class="pear-btn pear-btn-primary pear-btn-md" lay-event="add">
+        <i class="layui-icon layui-icon-add-1"></i>
+        新增
+    </button>
+    <button class="pear-btn pear-btn-danger pear-btn-md" lay-event="batchRemove">
+        <i class="layui-icon layui-icon-delete"></i>
+        删除
+    </button>
+</script>
+
+<script type="text/html" id="pet-bar">
+    <button class="pear-btn pear-btn-primary pear-btn-sm" lay-event="edit"><i class="layui-icon layui-icon-edit"></i></button>
+    <button class="pear-btn pear-btn-warming pear-btn-sm" lay-event="detail"><i class="layui-icon layui-icon-form"></i></button>
+    <button class="pear-btn pear-btn-danger pear-btn-sm" lay-event="remove"><i class="layui-icon layui-icon-delete"></i></button>
+</script>
+
+<script type="text/html" id="pet-gender">
+    {{#if (d.gender == '0') { }}
+    <span class="pear-badge pear-badge-primary">公</span>
+    {{# }else if(d.gender == '1'){ }}
+    <span class="pear-badge pear-badge-danger">母</span>
+    {{# } }}
+</script>
+
+<th:block th:include="include :: footer"/>
+<script>
+    layui.use(['table', 'form', 'jquery'], function () {
+        let table = layui.table;
+        let form = layui.form;
+        let $ = layui.jquery;
+
+        let MODULE_PATH = rootPath + "/PetController";
+
+        let cols = [
+            [
+                {type: 'checkbox'},
+                {title: 'ID', field: 'id', align: 'center', hide: true},
+                {title: '宠物名字', field: 'name', align: 'center'},
+                {title: '品种', field: 'breed', align: 'center'},
+                {title: '年龄', field: 'age', align: 'center', width: 80},
+                {title: '性别', field: 'gender', align: 'center', width: 80, templet: '#pet-gender'},
+                {title: '主人姓名', field: 'ownerName', align: 'center'},
+                {title: '主人电话', field: 'ownerPhone', align: 'center'},
+                {title: '创建时间', field: 'createTime', align: 'center'},
+                {title: '操作', toolbar: '#pet-bar', align: 'center', width: 180}
+            ]
+        ]
+
+        table.render({
+            elem: '#pet-table',
+            url: MODULE_PATH + '/list',
+            page: true,
+            method: 'get',
+            cols: cols,
+            skin: 'line',
+            toolbar: '#pet-toolbar',
+            defaultToolbar: [{
+                layEvent: 'refresh',
+                icon: 'layui-icon-refresh',
+            }, 'filter', 'print', 'exports'],
+            where: {
+                orderByColumn: "id",
+                isAsc: "desc"
+            }
+        });
+
+        table.on('tool(pet-table)', function (obj) {
+            if (obj.event === 'remove') {
+                window.remove(obj);
+            } else if (obj.event === 'edit') {
+                window.edit(obj);
+            } else if (obj.event === 'detail') {
+                window.detail(obj);
+            }
+        });
+
+        table.on('toolbar(pet-table)', function (obj) {
+            if (obj.event === 'add') {
+                window.add();
+            } else if (obj.event === 'refresh') {
+                window.refresh();
+            } else if (obj.event === 'batchRemove') {
+                window.batchRemove(obj);
+            }
+        });
+
+        form.on('submit(pet-query)', function (data) {
+            table.reload('pet-table', {where: data.field});
+            return false;
+        });
+
+        window.add = function () {
+            layer.open({
+                type: 2,
+                title: '新增宠物',
+                shade: 0.1,
+                area: ['700px', '550px'],
+                content: MODULE_PATH + '/add'
+            });
+        }
+
+        window.edit = function (obj) {
+            layer.open({
+                type: 2,
+                title: '修改宠物',
+                shade: 0.1,
+                area: ['900px', '700px'],
+                content: MODULE_PATH + '/edit/' + obj.data['id']
+            });
+        }
+
+        window.detail = function (obj) {
+            layer.open({
+                type: 2,
+                title: '宠物详情',
+                shade: 0.1,
+                area: ['1000px', '750px'],
+                content: MODULE_PATH + '/detail/' + obj.data['id']
+            });
+        }
+
+        window.remove = function (obj) {
+            layer.confirm('确定要删除该宠物吗？', {icon: 3, title: '提示'}, function (index) {
+                layer.close(index);
+                let loading = layer.load();
+                $.ajax({
+                    url: MODULE_PATH + "/remove?ids=" + obj.data['id'],
+                    dataType: 'json',
+                    type: 'delete',
+                    success: function (result) {
+                        layer.close(loading);
+                        if (result.code == 200) {
+                            layer.msg(result.msg, {icon: 1, time: 1000}, function () {
+                                obj.del();
+                            });
+                        } else {
+                            layer.msg(result.msg, {icon: 2, time: 1000});
+                        }
+                    }
+                })
+            });
+        }
+
+        window.batchRemove = function (obj) {
+            let data = table.checkStatus(obj.config.id).data;
+            if (data.length === 0) {
+                layer.msg("未选中数据", {icon: 3, time: 1000});
+                return false;
+            }
+            let ids = "";
+            for (let i = 0; i < data.length; i++) {
+                ids += data[i].id + ",";
+            }
+            ids = ids.substr(0, ids.length - 1);
+            layer.confirm('确定要删除选中的宠物吗？', {icon: 3, title: '提示'}, function (index) {
+                layer.close(index);
+                let loading = layer.load();
+                $.ajax({
+                    url: MODULE_PATH + "/remove?ids=" + ids,
+                    dataType: 'json',
+                    type: 'delete',
+                    success: function (result) {
+                        layer.close(loading);
+                        if (result.code == 200) {
+                            layer.msg(result.msg, {icon: 1, time: 1000}, function () {
+                                table.reload('pet-table');
+                            });
+                        } else {
+                            layer.msg(result.msg, {icon: 2, time: 1000});
+                        }
+                    }
+                })
+            });
+        }
+
+        window.refresh = function () {
+            table.reload('pet-table');
+        }
+    })
+</script>
+</html>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fc.v2.mapper.auto.PetMapper">
+
+    <resultMap type="com.fc.v2.model.auto.Pet" id="PetResult">
+        <result property="id"    column="id"    />
+        <result property="name"    column="name"    />
+        <result property="breed"    column="breed"    />
+        <result property="age"    column="age"    />
+        <result property="gender"    column="gender"    />
+        <result property="ownerName"    column="owner_name"    />
+        <result property="ownerPhone"    column="owner_phone"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectPetVo">
+        select id, name, breed, age, gender, owner_name, owner_phone, create_by, create_time, update_by, update_time, remark 
+        from t_pet
+    </sql>
+
+    <select id="selectPetById" resultMap="PetResult" parameterType="Long">
+        <include refid="selectPetVo"/>
+        <where>  
+            id = #{id}
+        </where>
+    </select>
+
+    <select id="selectPetList" resultMap="PetResult" parameterType="com.fc.v2.model.auto.Pet">
+        <include refid="selectPetVo"/>
+        <where>  
+            <if test="name != null  and name != ''"> and name like concat('%', #{name}, '%')</if>
+            <if test="breed != null  and breed != ''"> and breed like concat('%', #{breed}, '%')</if>
+            <if test="ownerName != null  and ownerName != ''"> and owner_name like concat('%', #{ownerName}, '%')</if>
+            <if test="ownerPhone != null  and ownerPhone != ''"> and owner_phone = #{ownerPhone}</if>
+        </where>
+        order by id DESC
+    </select>
+
+    <select id="selectPetDetailById" resultMap="PetResult" parameterType="Long">
+        <include refid="selectPetVo"/>
+        <where>  
+            id = #{id}
+        </where>
+    </select>
+
+</mapper>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fc.v2.mapper.auto.PetPhotoMapper">
+
+    <resultMap type="com.fc.v2.model.auto.PetPhoto" id="PetPhotoResult">
+        <result property="id"    column="id"    />
+        <result property="petId"    column="pet_id"    />
+        <result property="photoUrl"    column="photo_url"    />
+        <result property="photoName"    column="photo_name"    />
+        <result property="sort"    column="sort"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+
+    <sql id="selectPetPhotoVo">
+        select id, pet_id, photo_url, photo_name, sort, create_by, create_time 
+        from t_pet_photo
+    </sql>
+
+    <select id="selectPetPhotoById" resultMap="PetPhotoResult" parameterType="Long">
+        <include refid="selectPetPhotoVo"/>
+        <where>  
+            id = #{id}
+        </where>
+    </select>
+
+    <select id="selectPetPhotoList" resultMap="PetPhotoResult" parameterType="com.fc.v2.model.auto.PetPhoto">
+        <include refid="selectPetPhotoVo"/>
+        <where>  
+            <if test="petId != null "> and pet_id = #{petId}</if>
+        </where>
+        order by sort asc, id desc
+    </select>
+
+    <select id="selectPetPhotoByPetId" resultMap="PetPhotoResult" parameterType="Long">
+        <include refid="selectPetPhotoVo"/>
+        <where>  
+            pet_id = #{petId}
+        </where>
+        order by sort asc, id desc
+    </select>
+
+    <delete id="deletePetPhotoByPetId" parameterType="Long">
+        delete from t_pet_photo where pet_id = #{petId}
+    </delete>
+
+</mapper>
