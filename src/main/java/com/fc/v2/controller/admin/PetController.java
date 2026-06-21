@@ -106,6 +106,7 @@ public class PetController extends BaseController {
 
     @ApiOperation(value = "宠物详情跳转", notes = "宠物详情跳转")
     @GetMapping("/detail/{id}")
+    @RequiresPermissions("system:pet:view")
     public String detail(@PathVariable("id") Long id, ModelMap mmap) {
         Pet pet = petService.selectPetDetailById(id);
         mmap.put("pet", pet);
@@ -114,6 +115,7 @@ public class PetController extends BaseController {
 
     @ApiOperation(value = "获取宠物详情", notes = "获取宠物详情")
     @GetMapping("/detailData/{id}")
+    @RequiresPermissions("system:pet:view")
     @ResponseBody
     public AjaxResult detailData(@PathVariable("id") Long id) {
         Pet pet = petService.selectPetDetailById(id);
@@ -153,6 +155,7 @@ public class PetController extends BaseController {
 
     @ApiOperation(value = "获取宠物照片列表", notes = "获取宠物照片列表")
     @GetMapping("/photos/{petId}")
+    @RequiresPermissions("system:pet:view")
     @ResponseBody
     public AjaxResult photos(@PathVariable("petId") Long petId) {
         List<PetPhoto> photos = petPhotoService.selectPetPhotoByPetId(petId);
@@ -161,6 +164,7 @@ public class PetController extends BaseController {
 
     @ApiOperation(value = "获取宠物下拉列表", notes = "获取宠物下拉列表")
     @GetMapping("/selectList")
+    @RequiresPermissions("system:pet:list")
     @ResponseBody
     public AjaxResult selectList() {
         List<Pet> list = petService.selectPetList(new QueryWrapper<>());

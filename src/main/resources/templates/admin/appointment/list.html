@@ -13,9 +13,14 @@
                     <input type="text" name="customerName" placeholder="请输入客户姓名" class="layui-input">
                 </div>
 
-                <label class="layui-form-label">预约日期</label>
+                <label class="layui-form-label">开始日期</label>
                 <div class="layui-input-inline">
-                    <input type="text" name="appointmentTime" id="appointmentDate" placeholder="请选择日期" class="layui-input" readonly>
+                    <input type="text" name="startDate" id="startDate" placeholder="请选择开始日期" class="layui-input" readonly>
+                </div>
+
+                <label class="layui-form-label">结束日期</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="endDate" id="endDate" placeholder="请选择结束日期" class="layui-input" readonly>
                 </div>
 
                 <label class="layui-form-label">状态</label>
@@ -103,7 +108,13 @@
         let MODULE_PATH = rootPath + "/AppointmentController";
 
         laydate.render({
-            elem: '#appointmentDate',
+            elem: '#startDate',
+            type: 'date',
+            format: 'yyyy-MM-dd'
+        });
+
+        laydate.render({
+            elem: '#endDate',
             type: 'date',
             format: 'yyyy-MM-dd'
         });
