@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('套餐详情')"/>
+    <style>
+        .detail-card {
+            background: #fff;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .detail-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .detail-item {
+            margin-bottom: 10px;
+            display: flex;
+        }
+        .detail-label {
+            width: 120px;
+            color: #666;
+            flex-shrink: 0;
+        }
+        .detail-value {
+            color: #333;
+            flex: 1;
+        }
+        .price-text {
+            color: #f56c6c;
+            font-weight: bold;
+        }
+        .item-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .item-table th, .item-table td {
+            border: 1px solid #e6e6e6;
+            padding: 10px;
+            text-align: center;
+        }
+        .item-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .status-0 { background: #d4edda; color: #155724; }
+        .status-1 { background: #e2e3e5; color: #383d41; }
+    </style>
+</head>
+<body class="pear-container">
+<div class="detail-card">
+    <div class="detail-title">套餐信息</div>
+    <div class="layui-row">
+        <div class="layui-col-md6">
+            <div class="detail-item">
+                <span class="detail-label">套餐名称：</span>
+                <span class="detail-value" th:text="${tPackage.name}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">原价合计：</span>
+                <span class="detail-value price-text" th:text="'¥' + ${tPackage.originalPrice}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">套餐价格：</span>
+                <span class="detail-value price-text" th:text="'¥' + ${tPackage.packagePrice}"></span>
+            </div>
+        </div>
+        <div class="layui-col-md6">
+            <div class="detail-item">
+                <span class="detail-label">状态：</span>
+                <span class="detail-value">
+                    <span class="status-badge" th:class="'status-' + ${tPackage.status}" th:text="${tPackage.status == '0' ? '启用' : '禁用'}"></span>
+                </span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">创建时间：</span>
+                <span class="detail-value" th:text="${#dates.format(tPackage.createTime, 'yyyy-MM-dd HH:mm:ss')}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">更新时间：</span>
+                <span class="detail-value" th:text="${#dates.format(tPackage.updateTime, 'yyyy-MM-dd HH:mm:ss')}"></span>
+            </div>
+        </div>
+    </div>
+    <div class="detail-item" style="margin-top: 15px;">
+        <span class="detail-label">描述：</span>
+        <span class="detail-value" th:text="${tPackage.description} ?: '无'"></span>
+    </div>
+    <div class="detail-item" style="margin-top: 10px;">
+        <span class="detail-label">备注：</span>
+        <span class="detail-value" th:text="${tPackage.remark} ?: '无'"></span>
+    </div>
+</div>
+
+<div class="detail-card">
+    <div class="detail-title">套餐商品明细</div>
+    <table class="item-table">
+        <thead>
+            <tr>
+                <th style="width: 10%;">序号</th>
+                <th style="width: 40%;">服务类型</th>
+                <th style="width: 20%;">单价</th>
+                <th style="width: 15%;">数量</th>
+                <th style="width: 15%;">小计</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="item, iterStat : ${tPackage.items}">
+                <td th:text="${iterStat.count}"></td>
+                <td th:text="${item.serviceName}"></td>
+                <td class="price-text" th:text="'¥' + ${item.servicePrice}"></td>
+                <td th:text="${item.quantity}"></td>
+                <td class="price-text" th:text="'¥' + ${#numbers.formatDecimal(item.servicePrice * item.quantity, 1, 2)}"></td>
+            </tr>
+            <tr th:if="${tPackage.items == null or #lists.isEmpty(tPackage.items)}">
+                <td colspan="5" style="color: #999; padding: 30px;">暂无商品数据</td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="4" style="text-align: right; font-weight: bold;">原价合计：</td>
+                <td class="price-text" style="font-weight: bold;" th:text="'¥' + ${tPackage.originalPrice}"></td>
+            </tr>
+            <tr>
+                <td colspan="4" style="text-align: right; font-weight: bold;">套餐价：</td>
+                <td class="price-text" style="font-weight: bold; font-size: 16px;" th:text="'¥' + ${tPackage.packagePrice}"></td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+</body>
+<th:block th:include="include :: footer"/>
+</html>

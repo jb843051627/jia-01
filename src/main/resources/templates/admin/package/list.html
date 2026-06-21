@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('套餐列表')"/>
+</head>
+<body class="pear-container">
+<div class="layui-card">
+    <div class="layui-card-body">
+        <form class="layui-form" action="">
+            <div class="layui-form-item">
+                <label class="layui-form-label">套餐名称</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="name" placeholder="请输入套餐名称" class="layui-input">
+                </div>
+
+                <label class="layui-form-label">状态</label>
+                <div class="layui-input-inline">
+                    <select name="status">
+                        <option value="">全部</option>
+                        <option value="0">启用</option>
+                        <option value="1">禁用</option>
+                    </select>
+                </div>
+
+                <button class="pear-btn pear-btn-md pear-btn-primary" lay-submit lay-filter="package-query">
+                    <i class="layui-icon layui-icon-search"></i>
+                    查询
+                </button>
+                <button type="reset" class="pear-btn pear-btn-md">
+                    <i class="layui-icon layui-icon-refresh"></i>
+                    重置
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="layui-card">
+    <div class="layui-card-body">
+        <table id="package-table" lay-filter="package-table"></table>
+    </div>
+</div>
+</body>
+
+<script type="text/html" id="package-toolbar">
+    <button class="pear-btn pear-btn-primary pear-btn-md" lay-event="add">
+        <i class="layui-icon layui-icon-add-1"></i>
+        新增套餐
+    </button>
+    <button class="pear-btn pear-btn-danger pear-btn-md" lay-event="batchRemove">
+        <i class="layui-icon layui-icon-delete"></i>
+        删除
+    </button>
+</script>
+
+<script type="text/html" id="package-bar">
+    <button class="pear-btn pear-btn-primary pear-btn-sm" lay-event="edit"><i class="layui-icon layui-icon-edit"></i></button>
+    <button class="pear-btn pear-btn-warming pear-btn-sm" lay-event="detail"><i class="layui-icon layui-icon-form"></i></button>
+    <button class="pear-btn pear-btn-danger pear-btn-sm" lay-event="remove"><i class="layui-icon layui-icon-delete"></i></button>
+</script>
+
+<script type="text/html" id="package-status">
+    {{#if (d.status == '0') { }}
+    <span class="pear-badge pear-badge-success">启用</span>
+    {{# }else if(d.status == '1'){ }}
+    <span class="pear-badge">禁用</span>
+    {{# } }}
+</script>
+
+<th:block th:include="include :: footer"/>
+<script>
+    layui.use(['table', 'form', 'jquery'], function () {
+        let table = layui.table;
+        let form = layui.form;
+        let $ = layui.jquery;
+
+        let MODULE_PATH = rootPath + "/PackageController";
+
+        let cols = [
+            [
+                {type: 'checkbox'},
+                {title: 'ID', field: 'id', align: 'center', hide: true},
+                {title: '套餐名称', field: 'name', align: 'center'},
+                {title: '原价合计', field: 'originalPrice', align: 'center', width: 120, templet: function(d){ return '¥' + d.originalPrice; }},
+                {title: '套餐价格', field: 'packagePrice', align: 'center', width: 120, templet: function(d){ return '¥' + d.packagePrice; }},
+                {title: '状态', field: 'status', align: 'center', width: 100, templet: '#package-status'},
+                {title: '描述', field: 'description', align: 'center'},
+                {title: '创建时间', field: 'createTime', align: 'center', width: 160},
+                {title: '操作', toolbar: '#package-bar', align: 'center', width: 180}
+            ]
+        ]
+
+        table.render({
+            elem: '#package-table',
+            url: MODULE_PATH + '/list',
+            page: true,
+            method: 'get',
+            cols: cols,
+            skin: 'line',
+            toolbar: '#package-toolbar',
+            defaultToolbar: [{
+                layEvent: 'refresh',
+                icon: 'layui-icon-refresh',
+            }, 'filter', 'print', 'exports'],
+            where: {
+                orderByColumn: "create_time",
+                isAsc: "desc"
+            }
+        });
+
+        table.on('tool(package-table)', function (obj) {
+            if (obj.event === 'remove') {
+                window.remove(obj);
+            } else if (obj.event === 'edit') {
+                window.edit(obj);
+            } else if (obj.event === 'detail') {
+                window.detail(obj);
+            }
+        });
+
+        table.on('toolbar(package-table)', function (obj) {
+            if (obj.event === 'add') {
+                window.add();
+            } else if (obj.event === 'refresh') {
+                window.refresh();
+            } else if (obj.event === 'batchRemove') {
+                window.batchRemove(obj);
+            }
+        });
+
+        form.on('submit(package-query)', function (data) {
+            table.reload('package-table', {where: data.field});
+            return false;
+        });
+
+        window.add = function () {
+            layer.open({
+                type: 2,
+                title: '新增套餐',
+                shade: 0.1,
+                area: ['900px', '700px'],
+                content: MODULE_PATH + '/add'
+            });
+        }
+
+        window.edit = function (obj) {
+            layer.open({
+                type: 2,
+                title: '修改套餐',
+                shade: 0.1,
+                area: ['900px', '700px'],
+                content: MODULE_PATH + '/edit/' + obj.data['id']
+            });
+        }
+
+        window.detail = function (obj) {
+            layer.open({
+                type: 2,
+                title: '套餐详情',
+                shade: 0.1,
+                area: ['800px', '600px'],
+                content: MODULE_PATH + '/detail/' + obj.data['id']
+            });
+        }
+
+        window.remove = function (obj) {
+            layer.confirm('确定要删除该套餐吗？', {icon: 3, title: '提示'}, function (index) {
+                layer.close(index);
+                let loading = layer.load();
+                $.ajax({
+                    url: MODULE_PATH + "/remove?ids=" + obj.data['id'],
+                    dataType: 'json',
+                    type: 'delete',
+                    success: function (result) {
+                        layer.close(loading);
+                        if (result.code == 200) {
+                            layer.msg(result.msg, {icon: 1, time: 1000}, function () {
+                                obj.del();
+                            });
+                        } else {
+                            layer.msg(result.msg, {icon: 2, time: 1000});
+                        }
+                    }
+                })
+            });
+        }
+
+        window.batchRemove = function (obj) {
+            let data = table.checkStatus(obj.config.id).data;
+            if (data.length === 0) {
+                layer.msg("未选中数据", {icon: 3, time: 1000});
+                return false;
+            }
+            let ids = "";
+            for (let i = 0; i < data.length; i++) {
+                ids += data[i].id + ",";
+            }
+            ids = ids.substr(0, ids.length - 1);
+            layer.confirm('确定要删除选中的套餐吗？', {icon: 3, title: '提示'}, function (index) {
+                layer.close(index);
+                let loading = layer.load();
+                $.ajax({
+                    url: MODULE_PATH + "/remove?ids=" + ids,
+                    dataType: 'json',
+                    type: 'delete',
+                    success: function (result) {
+                        layer.close(loading);
+                        if (result.code == 200) {
+                            layer.msg(result.msg, {icon: 1, time: 1000}, function () {
+                                table.reload('package-table');
+                            });
+                        } else {
+                            layer.msg(result.msg, {icon: 2, time: 1000});
+                        }
+                    }
+                })
+            });
+        }
+
+        window.refresh = function () {
+            table.reload('package-table');
+        }
+    })
+</script>
+</html>

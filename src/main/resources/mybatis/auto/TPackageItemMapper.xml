@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fc.v2.mapper.auto.TPackageItemMapper">
+
+    <resultMap type="com.fc.v2.model.auto.TPackageItem" id="TPackageItemResult">
+        <result property="id"    column="id"    />
+        <result property="packageId"    column="package_id"    />
+        <result property="serviceTypeId"    column="service_type_id"    />
+        <result property="quantity"    column="quantity"    />
+        <result property="serviceName"    column="service_name"    />
+        <result property="servicePrice"    column="service_price"    />
+    </resultMap>
+
+    <sql id="selectTPackageItemVo">
+        select pi.id, pi.package_id, pi.service_type_id, pi.quantity,
+               s.name as service_name, s.price as service_price
+        from t_package_item pi
+        left join t_service_type s on pi.service_type_id = s.id
+    </sql>
+
+    <select id="selectPackageItemsByPackageId" resultMap="TPackageItemResult" parameterType="Long">
+        <include refid="selectTPackageItemVo"/>
+        <where>
+            pi.package_id = #{packageId}
+        </where>
+        order by pi.id asc
+    </select>
+
+    <delete id="deletePackageItemsByPackageId" parameterType="Long">
+        delete from t_package_item where package_id = #{packageId}
+    </delete>
+
+</mapper>

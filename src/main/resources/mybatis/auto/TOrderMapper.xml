@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fc.v2.mapper.auto.TOrderMapper">
+
+    <resultMap type="com.fc.v2.model.auto.TOrder" id="TOrderResult">
+        <result property="id"    column="id"    />
+        <result property="orderNo"    column="order_no"    />
+        <result property="appointmentId"    column="appointment_id"    />
+        <result property="customerName"    column="customer_name"    />
+        <result property="customerPhone"    column="customer_phone"    />
+        <result property="petId"    column="pet_id"    />
+        <result property="packageId"    column="package_id"    />
+        <result property="originalAmount"    column="original_amount"    />
+        <result property="orderAmount"    column="order_amount"    />
+        <result property="status"    column="status"    />
+        <result property="payTime"    column="pay_time"    />
+        <result property="serviceStartTime"    column="service_start_time"    />
+        <result property="serviceEndTime"    column="service_end_time"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+        <result property="packageName"    column="package_name"    />
+        <result property="petName"    column="pet_name"    />
+        <result property="appointmentNo"    column="appointment_no"    />
+    </resultMap>
+
+    <sql id="selectTOrderVo">
+        select o.id, o.order_no, o.appointment_id, o.customer_name, o.customer_phone,
+               o.pet_id, o.package_id, o.original_amount, o.order_amount, o.status,
+               o.pay_time, o.service_start_time, o.service_end_time,
+               o.create_by, o.create_time, o.update_by, o.update_time, o.remark,
+               p.name as package_name, pt.name as pet_name, a.appointment_no as appointment_no
+        from t_order o
+        left join t_package p on o.package_id = p.id
+        left join t_pet pt on o.pet_id = pt.id
+        left join t_appointment a on o.appointment_id = a.id
+    </sql>
+
+    <select id="selectOrderById" resultMap="TOrderResult" parameterType="Long">
+        <include refid="selectTOrderVo"/>
+        <where>
+            o.id = #{id}
+        </where>
+    </select>
+
+    <select id="selectOrderList" resultMap="TOrderResult">
+        <include refid="selectTOrderVo"/>
+        <where>
+            <if test="param1.orderNo != null  and param1.orderNo != ''"> and o.order_no like concat('%', #{param1.orderNo}, '%')</if>
+            <if test="param1.customerName != null  and param1.customerName != ''"> and o.customer_name like concat('%', #{param1.customerName}, '%')</if>
+            <if test="param1.customerPhone != null  and param1.customerPhone != ''"> and o.customer_phone = #{param1.customerPhone}</if>
+            <if test="param1.status != null  and param1.status != ''"> and o.status = #{param1.status}</if>
+            <if test="param2 != null"> and o.create_time <![CDATA[ >= ]]> #{param2}</if>
+            <if test="param3 != null"> and o.create_time <![CDATA[ <= ]]> date_add(#{param3}, interval 1 day)</if>
+        </where>
+        order by o.create_time desc
+    </select>
+
+    <select id="selectOrderDetailById" resultMap="TOrderResult" parameterType="Long">
+        <include refid="selectTOrderVo"/>
+        <where>
+            o.id = #{id}
+        </where>
+    </select>
+
+</mapper>

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header(${tPackage != null ? '修改套餐' : '新增套餐'})"/>
+    <style>
+        .item-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .item-table th, .item-table td {
+            border: 1px solid #e6e6e6;
+            padding: 8px;
+            text-align: center;
+        }
+        .item-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .item-table .layui-select, .item-table .layui-input {
+            height: 30px;
+            line-height: 30px;
+        }
+        .price-cell {
+            color: #f56c6c;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<form class="layui-form" th:object="${tPackage}">
+    <div class="mainBox">
+        <div class="main-container">
+            <input type="hidden" name="id" th:value="*{id}" th:if="${tPackage != null}">
+            <input type="hidden" name="itemsJson" id="itemsJson">
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">套餐名称<span style="color: red;">*</span></label>
+                <div class="layui-input-block">
+                    <input type="text" name="name" autocomplete="off" placeholder="请输入套餐名称" class="layui-input" lay-verify="required" required th:value="*{name}">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">原价合计</label>
+                <div class="layui-input-block">
+                    <input type="text" id="originalPriceShow" autocomplete="off" class="layui-input price-cell" readonly value="¥0.00">
+                    <input type="hidden" name="originalPrice" id="originalPrice" th:value="*{originalPrice}">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">套餐价格<span style="color: red;">*</span></label>
+                <div class="layui-input-block">
+                    <input type="text" name="packagePrice" autocomplete="off" placeholder="请输入套餐价格" class="layui-input" lay-verify="required|number" required th:value="*{packagePrice}">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">状态<span style="color: red;">*</span></label>
+                <div class="layui-input-block">
+                    <select name="status" lay-verify="required" required>
+                        <option value="0" th:selected="${tPackage != null and tPackage.status == '0'}">启用</option>
+                        <option value="1" th:selected="${tPackage != null and tPackage.status == '1'}">禁用</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">描述</label>
+                <div class="layui-input-block">
+                    <textarea name="description" placeholder="请输入套餐描述" class="layui-textarea" th:text="*{description}"></textarea>
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">备注</label>
+                <div class="layui-input-block">
+                    <textarea name="remark" placeholder="请输入备注" class="layui-textarea" th:text="*{remark}"></textarea>
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">套餐商品</label>
+                <div class="layui-input-block">
+                    <button type="button" class="pear-btn pear-btn-primary pear-btn-sm" id="addItemBtn">
+                        <i class="layui-icon layui-icon-add-1"></i>
+                        添加商品
+                    </button>
+                    <table class="item-table" id="itemTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 45%;">服务类型</th>
+                                <th style="width: 20%;">单价</th>
+                                <th style="width: 15%;">数量</th>
+                                <th style="width: 15%;">小计</th>
+                                <th style="width: 5%;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="itemTbody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="bottom">
+        <div class="button-container">
+            <button type="submit" class="layui-btn layui-btn-normal layui-btn-sm" lay-submit="" lay-filter="package-save">
+                <i class="layui-icon layui-icon-ok"></i>
+                <span th:text="${tPackage != null ? '保存' : '提交'}"></span>
+            </button>
+            <button type="button" class="layui-btn layui-btn-primary layui-btn-sm" onclick="parent.layer.close(parent.layer.getFrameIndex(window.name))">
+                <i class="layui-icon layui-icon-close"></i>
+                取消
+            </button>
+        </div>
+    </div>
+</form>
+<th:block th:include="include :: footer"/>
+<script>
+    layui.use(['form', 'jquery'], function () {
+        let form = layui.form;
+        let $ = layui.jquery;
+        let MODULE_PATH = rootPath + "/PackageController";
+        let isEdit = [[${tPackage != null}]];
+        let itemsJsonData = [[${itemsJson != null ? itemsJson : '[]'}]];
+
+        form.render();
+
+        let serviceTypeList = [];
+        <th:block th:each="service : ${serviceTypeList}">
+        serviceTypeList.push({
+            id: [[${service.id}]],
+            name: '[[${service.name}]]',
+            price: [[${service.price}]]
+        });
+        </th:block>
+
+        function getServiceTypeOptions(selectedId) {
+            let html = '<select class="service-type-select" lay-ignore>';
+            html += '<option value="">请选择服务类型</option>';
+            for (let i = 0; i < serviceTypeList.length; i++) {
+                let s = serviceTypeList[i];
+                let selected = (selectedId && s.id == selectedId) ? 'selected' : '';
+                html += '<option value="' + s.id + '" data-price="' + s.price + '" ' + selected + '>' + s.name + ' - ¥' + s.price + '</option>';
+            }
+            html += '</select>';
+            return html;
+        }
+
+        function addItem(serviceTypeId, quantity) {
+            let tr = $('<tr></tr>');
+            tr.append('<td>' + getServiceTypeOptions(serviceTypeId) + '</td>');
+            tr.append('<td class="price-cell unit-price">¥0.00</td>');
+            let qty = quantity ? quantity : 1;
+            tr.append('<td><input type="number" class="layui-input quantity-input" value="' + qty + '" min="1" style="height:30px;line-height:30px;"></td>');
+            tr.append('<td class="price-cell subtotal">¥0.00</td>');
+            tr.append('<td><button type="button" class="pear-btn pear-btn-danger pear-btn-xs delete-item"><i class="layui-icon layui-icon-delete"></i></button></td>');
+            $('#itemTbody').append(tr);
+            bindItemEvents(tr);
+            updateRowPrice(tr);
+        }
+
+        function bindItemEvents(tr) {
+            tr.find('.service-type-select').on('change', function () {
+                updateRowPrice(tr);
+                calculateOriginalPrice();
+            });
+            tr.find('.quantity-input').on('input', function () {
+                let val = parseInt($(this).val());
+                if (isNaN(val) || val < 1) {
+                    $(this).val(1);
+                }
+                updateRowPrice(tr);
+                calculateOriginalPrice();
+            });
+            tr.find('.delete-item').on('click', function () {
+                tr.remove();
+                calculateOriginalPrice();
+            });
+        }
+
+        function updateRowPrice(tr) {
+            let select = tr.find('.service-type-select');
+            let selectedOption = select.find('option:selected');
+            let price = parseFloat(selectedOption.data('price')) || 0;
+            let quantity = parseInt(tr.find('.quantity-input').val()) || 1;
+            let subtotal = price * quantity;
+            tr.find('.unit-price').text('¥' + price.toFixed(2));
+            tr.find('.subtotal').text('¥' + subtotal.toFixed(2));
+        }
+
+        function calculateOriginalPrice() {
+            let total = 0;
+            $('#itemTbody tr').each(function () {
+                let select = $(this).find('.service-type-select');
+                let selectedOption = select.find('option:selected');
+                let price = parseFloat(selectedOption.data('price')) || 0;
+                let quantity = parseInt($(this).find('.quantity-input').val()) || 1;
+                total += price * quantity;
+            });
+            $('#originalPriceShow').val('¥' + total.toFixed(2));
+            $('#originalPrice').val(total.toFixed(2));
+        }
+
+        function serializeItems() {
+            let items = [];
+            $('#itemTbody tr').each(function () {
+                let serviceTypeId = $(this).find('.service-type-select').val();
+                let quantity = parseInt($(this).find('.quantity-input').val()) || 1;
+                if (serviceTypeId) {
+                    items.push({
+                        serviceTypeId: serviceTypeId,
+                        quantity: quantity
+                    });
+                }
+            });
+            $('#itemsJson').val(JSON.stringify(items));
+        }
+
+        $('#addItemBtn').on('click', function () {
+            addItem(null, 1);
+        });
+
+        if (itemsJsonData && itemsJsonData.length > 0) {
+            for (let i = 0; i < itemsJsonData.length; i++) {
+                addItem(itemsJsonData[i].serviceTypeId, itemsJsonData[i].quantity);
+            }
+        }
+
+        calculateOriginalPrice();
+
+        let submitFilter = isEdit ? 'package-save' : 'package-save';
+        let submitUrl = isEdit ? MODULE_PATH + '/edit' : MODULE_PATH + '/add';
+
+        form.on('submit(package-save)', function (data) {
+            if ($('#itemTbody tr').length === 0) {
+                layer.msg('请至少添加一个商品', {icon: 2, time: 1000});
+                return false;
+            }
+            let hasEmpty = false;
+            $('#itemTbody tr').each(function () {
+                if (!$(this).find('.service-type-select').val()) {
+                    hasEmpty = true;
+                    return false;
+                }
+            });
+            if (hasEmpty) {
+                layer.msg('请选择服务类型', {icon: 2, time: 1000});
+                return false;
+            }
+            serializeItems();
+            let loading = layer.load();
+            $.ajax({
+                url: submitUrl,
+                data: data.field,
+                dataType: 'json',
+                contentType: 'application/x-www-form-urlencoded',
+                type: 'post',
+                success: function (result) {
+                    layer.close(loading);
+                    if (result.code == 200) {
+                        layer.msg(result.msg, {icon: 1, time: 1000}, function () {
+                            parent.layer.close(parent.layer.getFrameIndex(window.name));
+                            parent.layui.table.reload("package-table");
+                        });
+                    } else {
+                        layer.msg(result.msg, {icon: 2, time: 1000});
+                    }
+                }
+            })
+            return false;
+        });
+    })
+</script>
+</body>
+</html>

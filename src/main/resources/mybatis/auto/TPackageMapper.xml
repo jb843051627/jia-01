@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fc.v2.mapper.auto.TPackageMapper">
+
+    <resultMap type="com.fc.v2.model.auto.TPackage" id="TPackageResult">
+        <result property="id"    column="id"    />
+        <result property="name"    column="name"    />
+        <result property="originalPrice"    column="original_price"    />
+        <result property="packagePrice"    column="package_price"    />
+        <result property="description"    column="description"    />
+        <result property="status"    column="status"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectTPackageVo">
+        select id, name, original_price, package_price, description, status, create_by, create_time, update_by, update_time, remark
+        from t_package
+    </sql>
+
+    <select id="selectPackageById" resultMap="TPackageResult" parameterType="Long">
+        <include refid="selectTPackageVo"/>
+        <where>
+            id = #{id}
+        </where>
+    </select>
+
+    <select id="selectPackageList" resultMap="TPackageResult" parameterType="com.fc.v2.model.auto.TPackage">
+        <include refid="selectTPackageVo"/>
+        <where>
+            <if test="name != null  and name != ''"> and name like concat('%', #{name}, '%')</if>
+            <if test="status != null  and status != ''"> and status = #{status}</if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectEnabledPackageList" resultMap="TPackageResult">
+        <include refid="selectTPackageVo"/>
+        <where>
+            status = '0'
+        </where>
+        order by create_time desc
+    </select>
+
+</mapper>

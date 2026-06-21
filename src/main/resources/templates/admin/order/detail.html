@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('订单详情')"/>
+    <style>
+        .detail-card {
+            background: #fff;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .detail-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .detail-item {
+            margin-bottom: 10px;
+            display: flex;
+        }
+        .detail-label {
+            width: 120px;
+            color: #666;
+            flex-shrink: 0;
+        }
+        .detail-value {
+            color: #333;
+            flex: 1;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .status-0 { background: #fff3cd; color: #856404; }
+        .status-1 { background: #cce5ff; color: #004085; }
+        .status-2 { background: #f8d7da; color: #721c24; }
+        .status-3 { background: #d4edda; color: #155724; }
+        .status-4 { background: #e2e3e5; color: #383d41; }
+        .amount-red {
+            color: #f56c6c;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="pear-container">
+<div class="detail-card">
+    <div class="detail-title">订单信息</div>
+    <div class="layui-row">
+        <div class="layui-col-md6">
+            <div class="detail-item">
+                <span class="detail-label">订单号：</span>
+                <span class="detail-value" th:text="${tOrder.orderNo}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">客户姓名：</span>
+                <span class="detail-value" th:text="${tOrder.customerName}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">客户电话：</span>
+                <span class="detail-value" th:text="${tOrder.customerPhone}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">宠物名称：</span>
+                <span class="detail-value" th:text="${tOrder.petName} ?: '无'"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">关联预约：</span>
+                <span class="detail-value" th:text="${tOrder.appointmentNo} ?: '无'"></span>
+            </div>
+        </div>
+        <div class="layui-col-md6">
+            <div class="detail-item">
+                <span class="detail-label">套餐：</span>
+                <span class="detail-value" th:text="${tOrder.packageName} ?: '无（单独选商品）'"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">原价金额：</span>
+                <span class="detail-value amount-red" th:text="'¥' + ${tOrder.originalAmount}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">订单金额：</span>
+                <span class="detail-value amount-red" th:text="'¥' + ${tOrder.orderAmount}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">状态：</span>
+                <span class="detail-value">
+                    <span class="status-badge" th:class="'status-' + ${tOrder.status}" th:text="${tOrder.statusName}"></span>
+                </span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">创建时间：</span>
+                <span class="detail-value" th:text="${#dates.format(tOrder.createTime, 'yyyy-MM-dd HH:mm:ss')}"></span>
+            </div>
+        </div>
+    </div>
+    <div class="layui-row">
+        <div class="layui-col-md6">
+            <div class="detail-item">
+                <span class="detail-label">支付时间：</span>
+                <span class="detail-value" th:text="${tOrder.payTime} ? ${#dates.format(tOrder.payTime, 'yyyy-MM-dd HH:mm:ss')} : '未支付'"></span>
+            </div>
+        </div>
+        <div class="layui-col-md6">
+            <div class="detail-item">
+                <span class="detail-label">服务开始：</span>
+                <span class="detail-value" th:text="${tOrder.serviceStartTime} ? ${#dates.format(tOrder.serviceStartTime, 'yyyy-MM-dd HH:mm:ss')} : '未开始'"></span>
+            </div>
+        </div>
+    </div>
+    <div class="layui-row">
+        <div class="layui-col-md6">
+            <div class="detail-item">
+                <span class="detail-label">服务结束：</span>
+                <span class="detail-value" th:text="${tOrder.serviceEndTime} ? ${#dates.format(tOrder.serviceEndTime, 'yyyy-MM-dd HH:mm:ss')} : '未结束'"></span>
+            </div>
+        </div>
+    </div>
+    <div class="detail-item" style="margin-top: 20px;">
+        <span class="detail-label">备注：</span>
+        <span class="detail-value" th:text="${tOrder.remark} ?: '无'"></span>
+    </div>
+</div>
+
+<div class="detail-card">
+    <div class="detail-title">商品明细</div>
+    <table class="layui-table">
+        <thead>
+            <tr>
+                <th style="width: 60px;">序号</th>
+                <th>商品名称</th>
+                <th style="width: 120px;">单价</th>
+                <th style="width: 100px;">数量</th>
+                <th style="width: 120px;">小计</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="item, iterStat : ${tOrder.items}">
+                <td th:text="${iterStat.count}"></td>
+                <td th:text="${item.serviceName}"></td>
+                <td th:text="'¥' + ${item.price}"></td>
+                <td th:text="${item.quantity}"></td>
+                <td class="amount-red" th:text="'¥' + ${item.subtotal}"></td>
+            </tr>
+            <tr>
+                <td colspan="3" style="text-align: right; font-weight: bold;">合计：</td>
+                <td style="font-weight: bold;" th:text="${#aggregates.sum(tOrder.items, {it -> it.quantity})}"></td>
+                <td class="amount-red" style="font-weight: bold;" th:text="'¥' + ${tOrder.orderAmount}"></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+<th:block th:include="include :: footer"/>
+</html>

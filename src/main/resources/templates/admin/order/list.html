@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('订单列表')"/>
+</head>
+<body class="pear-container">
+<div class="layui-card">
+    <div class="layui-card-body">
+        <form class="layui-form" action="">
+            <div class="layui-form-item">
+                <label class="layui-form-label">订单号</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="orderNo" placeholder="请输入订单号" class="layui-input">
+                </div>
+
+                <label class="layui-form-label">客户姓名</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="customerName" placeholder="请输入客户姓名" class="layui-input">
+                </div>
+
+                <label class="layui-form-label">客户电话</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="customerPhone" placeholder="请输入客户电话" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">开始日期</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="startDate" id="startDate" placeholder="请选择开始日期" class="layui-input" readonly>
+                </div>
+
+                <label class="layui-form-label">结束日期</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="endDate" id="endDate" placeholder="请选择结束日期" class="layui-input" readonly>
+                </div>
+
+                <label class="layui-form-label">状态</label>
+                <div class="layui-input-inline">
+                    <select name="status">
+                        <option value="">全部</option>
+                        <option value="0">待付款</option>
+                        <option value="1">已付款</option>
+                        <option value="2">服务中</option>
+                        <option value="3">已完成</option>
+                        <option value="4">已取消</option>
+                    </select>
+                </div>
+
+                <button class="pear-btn pear-btn-md pear-btn-primary" lay-submit lay-filter="order-query">
+                    <i class="layui-icon layui-icon-search"></i>
+                    查询
+                </button>
+                <button type="reset" class="pear-btn pear-btn-md">
+                    <i class="layui-icon layui-icon-refresh"></i>
+                    重置
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="layui-card">
+    <div class="layui-card-body">
+        <table id="order-table" lay-filter="order-table"></table>
+    </div>
+</div>
+</body>
+
+<script type="text/html" id="order-toolbar">
+    <button class="pear-btn pear-btn-primary pear-btn-md" lay-event="add">
+        <i class="layui-icon layui-icon-add-1"></i>
+        新增订单
+    </button>
+    <button class="pear-btn pear-btn-danger pear-btn-md" lay-event="batchRemove">
+        <i class="layui-icon layui-icon-delete"></i>
+        删除
+    </button>
+</script>
+
+<script type="text/html" id="order-bar">
+    <button class="pear-btn pear-btn-warming pear-btn-sm" lay-event="detail"><i class="layui-icon layui-icon-form"></i></button>
+    <button class="pear-btn pear-btn-danger pear-btn-sm" lay-event="remove"><i class="layui-icon layui-icon-delete"></i></button>
+</script>
+
+<script type="text/html" id="order-status">
+    {{#if (d.status == '0') { }}
+    <span class="pear-badge pear-badge-warming">待付款</span>
+    {{# }else if(d.status == '1'){ }}
+    <span class="pear-badge pear-badge-primary">已付款</span>
+    {{# }else if(d.status == '2'){ }}
+    <span class="pear-badge pear-badge-danger">服务中</span>
+    {{# }else if(d.status == '3'){ }}
+    <span class="pear-badge pear-badge-success">已完成</span>
+    {{# }else if(d.status == '4'){ }}
+    <span class="pear-badge">已取消</span>
+    {{# } }}
+</script>
+
+<script type="text/html" id="order-actions">
+    {{#if (d.status == '0') { }}
+    <button class="pear-btn pear-btn-primary pear-btn-xs" lay-event="pay">付款</button>
+    <button class="pear-btn pear-btn-danger pear-btn-xs" lay-event="cancel">取消</button>
+    {{# }else if(d.status == '1'){ }}
+    <button class="pear-btn pear-btn-primary pear-btn-xs" lay-event="start">开始服务</button>
+    <button class="pear-btn pear-btn-danger pear-btn-xs" lay-event="cancel">取消</button>
+    {{# }else if(d.status == '2'){ }}
+    <button class="pear-btn pear-btn-success pear-btn-xs" lay-event="complete">完成</button>
+    <button class="pear-btn pear-btn-danger pear-btn-xs" lay-event="cancel">取消</button>
+    {{# } }}
+</script>
+
+<th:block th:include="include :: footer"/>
+<script>
+    layui.use(['table', 'form', 'jquery', 'laydate'], function () {
+        let table = layui.table;
+        let form = layui.form;
+        let $ = layui.jquery;
+        let laydate = layui.laydate;
+
+        let MODULE_PATH = rootPath + "/OrderController";
+
+        laydate.render({
+            elem: '#startDate',
+            type: 'date',
+            format: 'yyyy-MM-dd'
+        });
+
+        laydate.render({
+            elem: '#endDate',
+            type: 'date',
+            format: 'yyyy-MM-dd'
+        });
+
+        let cols = [
+            [
+                {type: 'checkbox'},
+                {title: 'ID', field: 'id', align: 'center', hide: true},
+                {title: '订单号', field: 'orderNo', align: 'center', width: 160},
+                {title: '客户姓名', field: 'customerName', align: 'center'},
+                {title: '客户电话', field: 'customerPhone', align: 'center', width: 120},
+                {title: '宠物名称', field: 'petName', align: 'center'},
+                {title: '套餐名称', field: 'packageName', align: 'center'},
+                {title: '预约单号', field: 'appointmentNo', align: 'center', width: 160},
+                {title: '原价金额', field: 'originalAmount', align: 'center', width: 110, templet: function(d){ return '¥' + d.originalAmount; }},
+                {title: '订单金额', field: 'orderAmount', align: 'center', width: 110, templet: function(d){ return '¥' + d.orderAmount; }},
+                {title: '状态', field: 'status', align: 'center', width: 100, templet: '#order-status'},
+                {title: '创建时间', field: 'createTime', align: 'center', width: 160},
+                {title: '状态操作', align: 'center', width: 180, toolbar: '#order-actions'},
+                {title: '操作', toolbar: '#order-bar', align: 'center', width: 120}
+            ]
+        ]
+
+        table.render({
+            elem: '#order-table',
+            url: MODULE_PATH + '/list',
+            page: true,
+            method: 'get',
+            cols: cols,
+            skin: 'line',
+            toolbar: '#order-toolbar',
+            defaultToolbar: [{
+                layEvent: 'refresh',
+                icon: 'layui-icon-refresh',
+            }, 'filter', 'print', 'exports'],
+            where: {
+                orderByColumn: "create_time",
+                isAsc: "desc"
+            }
+        });
+
+        table.on('tool(order-table)', function (obj) {
+            if (obj.event === 'remove') {
+                window.remove(obj);
+            } else if (obj.event === 'detail') {
+                window.detail(obj);
+            } else if (obj.event === 'pay') {
+                window.updateStatus(obj, '1');
+            } else if (obj.event === 'cancel') {
+                window.updateStatus(obj, '4');
+            } else if (obj.event === 'start') {
+                window.updateStatus(obj, '2');
+            } else if (obj.event === 'complete') {
+                window.updateStatus(obj, '3');
+            }
+        });
+
+        table.on('toolbar(order-table)', function (obj) {
+            if (obj.event === 'add') {
+                window.add();
+            } else if (obj.event === 'refresh') {
+                window.refresh();
+            } else if (obj.event === 'batchRemove') {
+                window.batchRemove(obj);
+            }
+        });
+
+        form.on('submit(order-query)', function (data) {
+            table.reload('order-table', {where: data.field});
+            return false;
+        });
+
+        window.add = function () {
+            layer.open({
+                type: 2,
+                title: '新增订单',
+                shade: 0.1,
+                area: ['950px', '750px'],
+                content: MODULE_PATH + '/add'
+            });
+        }
+
+        window.detail = function (obj) {
+            layer.open({
+                type: 2,
+                title: '订单详情',
+                shade: 0.1,
+                area: ['900px', '700px'],
+                content: MODULE_PATH + '/detail/' + obj.data['id']
+            });
+        }
+
+        window.remove = function (obj) {
+            layer.confirm('确定要删除该订单吗？', {icon: 3, title: '提示'}, function (index) {
+                layer.close(index);
+                let loading = layer.load();
+                $.ajax({
+                    url: MODULE_PATH + "/remove?ids=" + obj.data['id'],
+                    dataType: 'json',
+                    type: 'delete',
+                    success: function (result) {
+                        layer.close(loading);
+                        if (result.code == 200) {
+                            layer.msg(result.msg, {icon: 1, time: 1000}, function () {
+                                obj.del();
+                            });
+                        } else {
+                            layer.msg(result.msg, {icon: 2, time: 1000});
+                        }
+                    }
+                })
+            });
+        }
+
+        window.batchRemove = function (obj) {
+            let data = table.checkStatus(obj.config.id).data;
+            if (data.length === 0) {
+                layer.msg("未选中数据", {icon: 3, time: 1000});
+                return false;
+            }
+            let ids = "";
+            for (let i = 0; i < data.length; i++) {
+                ids += data[i].id + ",";
+            }
+            ids = ids.substr(0, ids.length - 1);
+            layer.confirm('确定要删除选中的订单吗？', {icon: 3, title: '提示'}, function (index) {
+                layer.close(index);
+                let loading = layer.load();
+                $.ajax({
+                    url: MODULE_PATH + "/remove?ids=" + ids,
+                    dataType: 'json',
+                    type: 'delete',
+                    success: function (result) {
+                        layer.close(loading);
+                        if (result.code == 200) {
+                            layer.msg(result.msg, {icon: 1, time: 1000}, function () {
+                                table.reload('order-table');
+                            });
+                        } else {
+                            layer.msg(result.msg, {icon: 2, time: 1000});
+                        }
+                    }
+                })
+            });
+        }
+
+        window.updateStatus = function (obj, status) {
+            let msg = '';
+            switch(status) {
+                case '1': msg = '付款'; break;
+                case '2': msg = '开始服务'; break;
+                case '3': msg = '完成'; break;
+                case '4': msg = '取消'; break;
+            }
+            layer.confirm('确定要' + msg + '该订单吗？', {icon: 3, title: '提示'}, function (index) {
+                layer.close(index);
+                let loading = layer.load();
+                $.ajax({
+                    url: MODULE_PATH + "/updateStatus",
+                    data: {id: obj.data['id'], status: status},
+                    dataType: 'json',
+                    type: 'post',
+                    success: function (result) {
+                        layer.close(loading);
+                        if (result.code == 200) {
+                            layer.msg(result.msg, {icon: 1, time: 1000}, function () {
+                                table.reload('order-table');
+                            });
+                        } else {
+                            layer.msg(result.msg, {icon: 2, time: 1000});
+                        }
+                    }
+                })
+            });
+        }
+
+        window.refresh = function () {
+            table.reload('order-table');
+        }
+    })
+</script>
+</html>
