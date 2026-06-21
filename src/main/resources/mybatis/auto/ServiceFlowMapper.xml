@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fc.v2.mapper.auto.ServiceFlowMapper">
+
+    <resultMap type="com.fc.v2.model.auto.ServiceFlow" id="ServiceFlowResult">
+        <result property="id"    column="id"    />
+        <result property="appointmentId"    column="appointment_id"    />
+        <result property="nodeName"    column="node_name"    />
+        <result property="nodeCode"    column="node_code"    />
+        <result property="sortOrder"    column="sort_order"    />
+        <result property="status"    column="status"    />
+        <result property="photoUrl"    column="photo_url"    />
+        <result property="completeTime"    column="complete_time"    />
+        <result property="remark"    column="remark"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectServiceFlowVo">
+        select id, appointment_id, node_name, node_code, sort_order, status, photo_url, complete_time,
+               remark, create_by, create_time, update_by, update_time
+        from t_service_flow
+    </sql>
+
+    <select id="selectServiceFlowByAppointmentId" resultMap="ServiceFlowResult" parameterType="Long">
+        <include refid="selectServiceFlowVo"/>
+        <where>
+            appointment_id = #{appointmentId}
+        </where>
+        order by sort_order asc
+    </select>
+
+    <select id="selectActiveNodeByAppointmentId" resultMap="ServiceFlowResult" parameterType="Long">
+        <include refid="selectServiceFlowVo"/>
+        <where>
+            appointment_id = #{appointmentId}
+            and status = '1'
+        </where>
+        order by sort_order asc
+        limit 1
+    </select>
+
+</mapper>

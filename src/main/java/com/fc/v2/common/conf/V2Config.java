@@ -127,4 +127,9 @@ public class V2Config
 	{
 		return this.profile + "/petPhoto";
 	}
+
+	public String getServiceFlowPhotoPath()
+	{
+		return this.profile + "/serviceFlowPhoto";
+	}
 }

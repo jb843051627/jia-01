@@ -14,6 +14,7 @@ import com.fc.v2.model.auto.Appointment;
 import com.fc.v2.model.auto.AppointmentStatus;
 import com.fc.v2.model.auto.ServiceType;
 import com.fc.v2.service.ITAppointmentService;
+import com.fc.v2.service.ITServiceFlowService;
 import com.fc.v2.service.ITServiceTypeService;
 import com.fc.v2.util.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,9 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
 
     @Autowired
     private ITServiceTypeService serviceTypeService;
+
+    @Autowired
+    private ITServiceFlowService serviceFlowService;
 
     @Override
     public Appointment selectAppointmentById(Long id) {
@@ -165,6 +169,9 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
 
         int result = this.baseMapper.updateById(appointment);
         if (result > 0) {
+            if (AppointmentStatus.SERVING.getCode().equals(status)) {
+                serviceFlowService.createFlowNodes(id);
+            }
             return AjaxResult.success("状态更新成功");
         }
         return AjaxResult.error("状态更新失败");
