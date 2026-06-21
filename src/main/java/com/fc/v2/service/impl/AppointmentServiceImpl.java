@@ -19,6 +19,7 @@ import com.fc.v2.service.ITServiceTypeService;
 import com.fc.v2.util.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appointment> implements ITAppointmentService {
@@ -156,6 +157,7 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public AjaxResult updateStatus(Long id, String status) {
         Appointment appointment = new Appointment();
         appointment.setId(id);

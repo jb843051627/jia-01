@@ -159,7 +159,6 @@ CREATE TABLE `t_service_flow` (
   `sort_order` int(11) NOT NULL DEFAULT '0' COMMENT '排序',
   `status` char(1) DEFAULT '0' COMMENT '状态 0=待处理,1=进行中,2=已完成',
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
-  `photo_url` varchar(500) DEFAULT NULL COMMENT '照片URL',
   `complete_time` datetime DEFAULT NULL COMMENT '完成时间',
   `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
@@ -171,6 +170,22 @@ CREATE TABLE `t_service_flow` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='服务流程节点表';
 
 -- ========================================
+-- 服务流程节点照片表
+-- ========================================
+DROP TABLE IF EXISTS `t_service_flow_photo`;
+CREATE TABLE `t_service_flow_photo` (
+  `id` bigint(20) NOT NULL COMMENT '主键ID',
+  `flow_id` bigint(20) NOT NULL COMMENT '流程节点ID',
+  `photo_url` varchar(255) NOT NULL COMMENT '照片URL',
+  `photo_name` varchar(100) DEFAULT NULL COMMENT '照片名称',
+  `sort` int(11) DEFAULT '0' COMMENT '排序',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_flow_id` (`flow_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='服务流程节点照片表';
+
+-- ========================================
 -- 服务流程管理权限
 -- ========================================
 INSERT INTO `t_sys_permission` VALUES
@@ -180,3 +195,22 @@ INSERT INTO `t_sys_permission` VALUES
 INSERT INTO `t_sys_permission_role` (`id`, `role_id`, `permission_id`) VALUES
 (9203000000000000101, 488243256161730560, 9203000000000000001),
 (9203000000000000102, 488243256161730560, 9203000000000000002);
+
+-- ========================================
+-- 增量更新脚本（已有数据库执行以下SQL）
+-- ========================================
+-- 1. 创建服务流程节点照片表
+-- CREATE TABLE `t_service_flow_photo` (
+--   `id` bigint(20) NOT NULL COMMENT '主键ID',
+--   `flow_id` bigint(20) NOT NULL COMMENT '流程节点ID',
+--   `photo_url` varchar(255) NOT NULL COMMENT '照片URL',
+--   `photo_name` varchar(100) DEFAULT NULL COMMENT '照片名称',
+--   `sort` int(11) DEFAULT '0' COMMENT '排序',
+--   `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+--   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+--   PRIMARY KEY (`id`),
+--   KEY `idx_flow_id` (`flow_id`)
+-- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='服务流程节点照片表';
+
+-- 2. 从 t_service_flow 表移除 photo_url 列
+-- ALTER TABLE `t_service_flow` DROP COLUMN `photo_url`;

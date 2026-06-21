@@ -15,7 +15,7 @@ public interface ITServiceFlowService extends IService<ServiceFlow> {
 
     public AjaxResult updateNodeRemark(Long id, String remark);
 
-    public AjaxResult uploadNodePhoto(Long id, String photoUrl);
+    public AjaxResult uploadNodePhoto(Long id, String photoUrl, String photoName);
 
     public ServiceFlow selectActiveNodeByAppointmentId(Long appointmentId);
 

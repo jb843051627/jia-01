@@ -6,6 +6,7 @@ import com.fc.v2.common.domain.AjaxResult;
 import com.fc.v2.model.auto.ServiceFlow;
 import com.fc.v2.service.ITServiceFlowService;
 import com.fc.v2.util.file.FileUploadUtils;
+import com.fc.v2.util.file.MimeTypeUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -62,8 +63,9 @@ public class ServiceFlowController extends BaseController {
     public AjaxResult uploadPhoto(@RequestParam("id") Long id, @RequestParam("file") MultipartFile file) {
         try {
             if (!file.isEmpty()) {
-                String photoUrl = FileUploadUtils.upload(v2Config.getProfile(), v2Config.getServiceFlowPhotoPath(), file);
-                return serviceFlowService.uploadNodePhoto(id, photoUrl);
+                String originalFilename = file.getOriginalFilename();
+                String photoUrl = FileUploadUtils.upload(v2Config.getProfile(), v2Config.getServiceFlowPhotoPath(), file, MimeTypeUtils.IMAGE_EXTENSION);
+                return serviceFlowService.uploadNodePhoto(id, photoUrl, originalFilename);
             }
             return AjaxResult.error("上传照片不能为空");
         } catch (Exception e) {

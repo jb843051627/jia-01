@@ -1,6 +1,7 @@
 package com.fc.v2.model.auto;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -13,6 +14,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
 import java.util.Date;
+import java.util.List;
 
 @TableName("t_service_flow")
 @ApiModel(value = "ServiceFlow", description = "服务流程节点表")
@@ -40,15 +42,16 @@ public class ServiceFlow extends BaseEntity {
     @ApiModelProperty(value = "状态 0=待处理,1=进行中,2=已完成")
     private String status;
 
-    @ApiModelProperty(value = "照片URL")
-    private String photoUrl;
-
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @ApiModelProperty(value = "完成时间")
     private Date completeTime;
 
     @ApiModelProperty(value = "状态名称")
     private String statusName;
+
+    @TableField(exist = false)
+    @ApiModelProperty(value = "节点照片列表")
+    private List<ServiceFlowPhoto> photos;
 
     public Long getId() {
         return id;
@@ -98,14 +101,6 @@ public class ServiceFlow extends BaseEntity {
         this.status = status;
     }
 
-    public String getPhotoUrl() {
-        return photoUrl;
-    }
-
-    public void setPhotoUrl(String photoUrl) {
-        this.photoUrl = photoUrl;
-    }
-
     public Date getCompleteTime() {
         return completeTime;
     }
@@ -122,6 +117,14 @@ public class ServiceFlow extends BaseEntity {
         this.statusName = statusName;
     }
 
+    public List<ServiceFlowPhoto> getPhotos() {
+        return photos;
+    }
+
+    public void setPhotos(List<ServiceFlowPhoto> photos) {
+        this.photos = photos;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
@@ -131,7 +134,6 @@ public class ServiceFlow extends BaseEntity {
                 .append("nodeCode", getNodeCode())
                 .append("sortOrder", getSortOrder())
                 .append("status", getStatus())
-                .append("photoUrl", getPhotoUrl())
                 .append("completeTime", getCompleteTime())
                 .append("remark", getRemark())
                 .append("createBy", getCreateBy())

@@ -7,6 +7,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fc.v2.common.domain.AjaxResult;
 import com.fc.v2.mapper.auto.ServiceFlowMapper;
 import com.fc.v2.model.auto.ServiceFlow;
+import com.fc.v2.model.auto.ServiceFlowPhoto;
+import com.fc.v2.service.ITServiceFlowPhotoService;
 import com.fc.v2.service.ITServiceFlowService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,9 @@ public class ServiceFlowServiceImpl extends ServiceImpl<ServiceFlowMapper, Servi
 
     @Autowired
     private ServiceFlowMapper serviceFlowMapper;
+
+    @Autowired
+    private ITServiceFlowPhotoService serviceFlowPhotoService;
 
     private static final String[][] FLOW_NODES = {
             {"reception", "接待"},
@@ -34,19 +39,20 @@ public class ServiceFlowServiceImpl extends ServiceImpl<ServiceFlowMapper, Servi
         List<ServiceFlow> list = serviceFlowMapper.selectServiceFlowByAppointmentId(appointmentId);
         for (ServiceFlow item : list) {
             item.setStatusName(getStatusName(item.getStatus()));
+            List<ServiceFlowPhoto> photos = serviceFlowPhotoService.selectServiceFlowPhotoByFlowId(item.getId());
+            item.setPhotos(photos);
         }
         return list;
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AjaxResult createFlowNodes(Long appointmentId) {
         List<ServiceFlow> existing = serviceFlowMapper.selectServiceFlowByAppointmentId(appointmentId);
         if (existing != null && !existing.isEmpty()) {
             return AjaxResult.success("流程节点已存在");
         }
 
-        List<ServiceFlow> nodes = new ArrayList<>();
         for (int i = 0; i < FLOW_NODES.length; i++) {
             ServiceFlow node = new ServiceFlow();
             node.setAppointmentId(appointmentId);
@@ -58,7 +64,6 @@ public class ServiceFlowServiceImpl extends ServiceImpl<ServiceFlowMapper, Servi
             } else {
                 node.setStatus(STATUS_PENDING);
             }
-            nodes.add(node);
             this.baseMapper.insert(node);
         }
 
@@ -66,7 +71,7 @@ public class ServiceFlowServiceImpl extends ServiceImpl<ServiceFlowMapper, Servi
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AjaxResult completeNode(Long id, String remark) {
         ServiceFlow node = this.baseMapper.selectById(id);
         if (node == null) {
@@ -115,18 +120,25 @@ public class ServiceFlowServiceImpl extends ServiceImpl<ServiceFlowMapper, Servi
     }
 
     @Override
-    public AjaxResult uploadNodePhoto(Long id, String photoUrl) {
+    public AjaxResult uploadNodePhoto(Long id, String photoUrl, String photoName) {
         ServiceFlow node = this.baseMapper.selectById(id);
         if (node == null) {
             return AjaxResult.error("节点不存在");
         }
-        String existing = node.getPhotoUrl();
-        if (existing != null && !existing.isEmpty()) {
-            node.setPhotoUrl(existing + "," + photoUrl);
-        } else {
-            node.setPhotoUrl(photoUrl);
+
+        List<ServiceFlowPhoto> existingPhotos = serviceFlowPhotoService.selectServiceFlowPhotoByFlowId(id);
+        int nextSort = 0;
+        if (existingPhotos != null && !existingPhotos.isEmpty()) {
+            nextSort = existingPhotos.size();
         }
-        this.baseMapper.updateById(node);
+
+        ServiceFlowPhoto photo = new ServiceFlowPhoto();
+        photo.setFlowId(id);
+        photo.setPhotoUrl(photoUrl);
+        photo.setPhotoName(photoName);
+        photo.setSort(nextSort);
+        serviceFlowPhotoService.insertServiceFlowPhoto(photo);
+
         return AjaxResult.success("照片上传成功");
     }
 
@@ -140,6 +152,8 @@ public class ServiceFlowServiceImpl extends ServiceImpl<ServiceFlowMapper, Servi
         ServiceFlow node = this.baseMapper.selectById(id);
         if (node != null) {
             node.setStatusName(getStatusName(node.getStatus()));
+            List<ServiceFlowPhoto> photos = serviceFlowPhotoService.selectServiceFlowPhotoByFlowId(id);
+            node.setPhotos(photos);
         }
         return node;
     }
