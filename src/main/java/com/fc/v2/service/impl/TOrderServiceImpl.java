@@ -103,7 +103,16 @@ public class TOrderServiceImpl extends ServiceImpl<TOrderMapper, TOrder> impleme
                 int qty = pkgItem.getQuantity();
                 stockMap.merge(pkgItem.getServiceTypeId(), qty, Integer::sum);
                 ServiceType st = serviceTypeMapper.selectServiceTypeById(pkgItem.getServiceTypeId());
-                if (st != null) {
+                if (st == null) {
+                    return AjaxResult.error("商品不存在");
+                }
+                if (st.getName() != null) {
+                    pkgItem.setServiceName(st.getName());
+                }
+                if (st.getPrice() != null) {
+                    pkgItem.setServicePrice(st.getPrice());
+                }
+                if (st.getPrice() != null) {
                     originalAmount = originalAmount.add(st.getPrice().multiply(new BigDecimal(qty)));
                 }
             }
@@ -118,30 +127,20 @@ public class TOrderServiceImpl extends ServiceImpl<TOrderMapper, TOrder> impleme
                 }
                 stockMap.merge(item.getServiceTypeId(), item.getQuantity(), Integer::sum);
             }
-        } else {
-            return AjaxResult.error("请选择套餐或商品");
-        }
-
-        for (Map.Entry<Long, Integer> entry : stockMap.entrySet()) {
-            ServiceType st = serviceTypeMapper.selectServiceTypeById(entry.getKey());
-            if (st == null) {
-                return AjaxResult.error("商品不存在");
-            }
-            if (st.getStock() == null || st.getStock() < entry.getValue()) {
-                return AjaxResult.error("商品[" + st.getName() + "]库存不足，剩余库存：" + (st.getStock() == null ? 0 : st.getStock()));
-            }
-        }
-
-        if (items != null && !items.isEmpty() && tOrder.getPackageId() == null) {
             for (TOrderItem item : items) {
                 ServiceType st = serviceTypeMapper.selectServiceTypeById(item.getServiceTypeId());
+                if (st == null) {
+                    return AjaxResult.error("商品不存在");
+                }
                 item.setServiceName(st.getName());
                 item.setPrice(st.getPrice());
-                BigDecimal subtotal = st.getPrice().multiply(new BigDecimal(item.getQuantity()));
+                BigDecimal subtotal = st.getPrice() != null ? st.getPrice().multiply(new BigDecimal(item.getQuantity())) : BigDecimal.ZERO;
                 item.setSubtotal(subtotal);
                 originalAmount = originalAmount.add(subtotal);
             }
             orderAmount = originalAmount;
+        } else {
+            return AjaxResult.error("请选择套餐或商品");
         }
 
         if (tOrder.getOrderAmount() != null) {
@@ -181,9 +180,11 @@ public class TOrderServiceImpl extends ServiceImpl<TOrderMapper, TOrder> impleme
         }
 
         for (Map.Entry<Long, Integer> entry : stockMap.entrySet()) {
-            ServiceType st = serviceTypeMapper.selectServiceTypeById(entry.getKey());
-            st.setStock(st.getStock() - entry.getValue());
-            serviceTypeMapper.updateById(st);
+            int affected = serviceTypeMapper.decreaseStock(entry.getKey(), entry.getValue());
+            if (affected == 0) {
+                ServiceType st = serviceTypeMapper.selectServiceTypeById(entry.getKey());
+                throw new RuntimeException("商品[" + (st != null ? st.getName() : "未知") + "]库存不足");
+            }
         }
 
         return AjaxResult.success("下单成功");
@@ -202,18 +203,34 @@ public class TOrderServiceImpl extends ServiceImpl<TOrderMapper, TOrder> impleme
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public int deleteOrderByIds(String ids) {
         String[] idsArray = ConvertUtil.toStrArray(ids);
         for (String id : idsArray) {
-            tOrderItemMapper.deleteOrderItemsByOrderId(Long.parseLong(id));
+            Long orderId = Long.parseLong(id);
+            restoreStock(orderId);
+            tOrderItemMapper.deleteOrderItemsByOrderId(orderId);
         }
         return this.baseMapper.deleteBatchIds(Arrays.asList(idsArray));
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public int deleteOrderById(Long id) {
+        restoreStock(id);
         tOrderItemMapper.deleteOrderItemsByOrderId(id);
         return this.baseMapper.deleteById(id);
+    }
+
+    private void restoreStock(Long orderId) {
+        List<TOrderItem> orderItems = tOrderItemMapper.selectOrderItemsByOrderId(orderId);
+        if (orderItems != null && !orderItems.isEmpty()) {
+            for (TOrderItem item : orderItems) {
+                if (item.getServiceTypeId() != null && item.getQuantity() != null) {
+                    serviceTypeMapper.increaseStock(item.getServiceTypeId(), item.getQuantity());
+                }
+            }
+        }
     }
 
     @Override
@@ -226,6 +243,22 @@ public class TOrderServiceImpl extends ServiceImpl<TOrderMapper, TOrder> impleme
     @Override
     @Transactional(rollbackFor = Exception.class)
     public AjaxResult updateStatus(Long id, String status) {
+        TOrder existingOrder = tOrderMapper.selectOrderById(id);
+        if (existingOrder == null) {
+            return AjaxResult.error("订单不存在");
+        }
+
+        OrderStatus currentStatus = OrderStatus.getByCode(existingOrder.getStatus());
+        OrderStatus targetStatus = OrderStatus.getByCode(status);
+        if (targetStatus == null) {
+            return AjaxResult.error("目标状态无效");
+        }
+
+        String transitionError = validateStatusTransition(currentStatus, targetStatus);
+        if (transitionError != null) {
+            return AjaxResult.error(transitionError);
+        }
+
         TOrder tOrder = new TOrder();
         tOrder.setId(id);
         tOrder.setStatus(status);
@@ -236,6 +269,13 @@ public class TOrderServiceImpl extends ServiceImpl<TOrderMapper, TOrder> impleme
             tOrder.setServiceStartTime(new Date());
         } else if (OrderStatus.COMPLETED.getCode().equals(status)) {
             tOrder.setServiceEndTime(new Date());
+        } else if (OrderStatus.CANCELLED.getCode().equals(status)) {
+            if (currentStatus != OrderStatus.PENDING_PAYMENT
+                    && currentStatus != OrderStatus.PAID
+                    && currentStatus != OrderStatus.SERVING) {
+                return AjaxResult.error("当前状态不允许取消订单");
+            }
+            restoreStock(id);
         }
 
         int result = this.baseMapper.updateById(tOrder);
@@ -243,5 +283,36 @@ public class TOrderServiceImpl extends ServiceImpl<TOrderMapper, TOrder> impleme
             return AjaxResult.success("状态更新成功");
         }
         return AjaxResult.error("状态更新失败");
+    }
+
+    private String validateStatusTransition(OrderStatus currentStatus, OrderStatus targetStatus) {
+        if (currentStatus == null) {
+            return "当前订单状态无效";
+        }
+        if (currentStatus == targetStatus) {
+            return null;
+        }
+        switch (currentStatus) {
+            case PENDING_PAYMENT:
+                if (targetStatus == OrderStatus.PAID || targetStatus == OrderStatus.CANCELLED) {
+                    return null;
+                }
+                return "待付款状态只能改为已付款或已取消";
+            case PAID:
+                if (targetStatus == OrderStatus.SERVING || targetStatus == OrderStatus.CANCELLED) {
+                    return null;
+                }
+                return "已付款状态只能改为服务中或已取消";
+            case SERVING:
+                if (targetStatus == OrderStatus.COMPLETED || targetStatus == OrderStatus.CANCELLED) {
+                    return null;
+                }
+                return "服务中状态只能改为已完成或已取消";
+            case COMPLETED:
+            case CANCELLED:
+                return "已完成或已取消的订单不能再修改状态";
+            default:
+                return "未知订单状态";
+        }
     }
 }

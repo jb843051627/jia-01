@@ -47,4 +47,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         order by id asc
     </select>
 
+    <update id="decreaseStock">
+        update t_service_type
+        set stock = stock - #{quantity}
+        where id = #{id} and stock >= #{quantity}
+    </update>
+
+    <update id="increaseStock">
+        update t_service_type
+        set stock = stock + #{quantity}
+        where id = #{id}
+    </update>
+
 </mapper>
