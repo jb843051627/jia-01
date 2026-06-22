@@ -101,6 +101,16 @@ public class GlobalExceptionResolver{
     }
     
     /**
+     * 业务异常
+     */
+    @ExceptionHandler(BusinessException.class)
+    public AjaxResult businessException(BusinessException e)
+    {
+        logger.error("业务异常:", e);
+        return AjaxResult.error(e.getCode(), e.getMessage());
+    }
+
+    /**
      * 演示模式异常
      */
     @ExceptionHandler(DemoModeException.class)

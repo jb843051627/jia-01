@@ -7,6 +7,7 @@ import com.fc.v2.shiro.util.ShiroUtils;
 import com.fc.v2.util.ServletUtils;
 import com.fc.v2.util.StringUtils;
 import com.google.gson.Gson;
+import org.apache.shiro.UnavailableSecurityManagerException;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.Signature;
 import org.aspectj.lang.annotation.AfterReturning;
@@ -20,7 +21,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.Map;
@@ -82,28 +86,35 @@ public class LogAspect
             }
 
             // 获取当前的用户
-            TSysUser currentUser = ShiroUtils.getUser();
+            TSysUser currentUser = getCurrentUser();
+
+            // 获取请求对象
+            HttpServletRequest request = getRequest();
 
             // *========数据库日志=========*//
             TSysOperLog operLog = new TSysOperLog();
-           
-            //赋值操作
-            /*String ip = ShiroUtils.getIp();
-            operLog.setOperIp(ip);*/
-            // 操作地点
-            //operLog.setOperLocation(AddressUtils.getRealAddressByIP(ip));
+
             // 请求的地址
-            operLog.setOperUrl(ServletUtils.getRequest().getRequestURI());
-            if (currentUser != null)
-            {
-//            	//操作人
-                operLog.setOperName(currentUser.getUsername());
-//                if (StringUtils.isNotNull(currentUser.getDept())
-//                        && StringUtils.isNotEmpty(currentUser.getDept().getDeptName()))
-//                {
-//                    operLog.setDeptName(currentUser.getDept().getDeptName());
-//                }
+            if (request != null) {
+                operLog.setOperUrl(request.getRequestURI());
             }
+
+            // 操作人
+            String operName = currentUser != null ? currentUser.getUsername() : "anonymous";
+            operLog.setOperName(operName);
+
+            // 请求方式和IP（存放到 remark 中，避免改表结构）
+            StringBuilder remarkBuilder = new StringBuilder();
+            if (request != null) {
+                String ip = ServletUtils.getClientIp(request);
+                String method = request.getMethod();
+                remarkBuilder.append("IP:").append(ip).append("; ");
+                remarkBuilder.append("Method:").append(method).append("; ");
+            }
+            if (currentUser != null && currentUser.getId() != null) {
+                remarkBuilder.append("UserId:").append(currentUser.getId()).append("; ");
+            }
+            operLog.setRemark(remarkBuilder.toString());
 
             if (e != null)
             {
@@ -118,9 +129,6 @@ public class LogAspect
             // 处理设置注解上的参数
             getControllerMethodDescription(controllerLog, operLog);
             // 保存数据库
-            //System.out.println("-----------------");
-            //System.out.println(new Gson().toJson(operLog));
-            //System.out.println("-----------------");
             operLogService.insertTSysOperLog(operLog);
         }
         catch (Exception exp)
@@ -129,6 +137,38 @@ public class LogAspect
             log.error("==前置通知异常==");
             log.error("异常信息:{}", exp.getMessage());
             exp.printStackTrace();
+        }
+    }
+
+    /**
+     * 获取当前登录用户
+     *
+     * @return 用户对象，未登录返回null
+     */
+    private TSysUser getCurrentUser() {
+        try {
+            return ShiroUtils.getUser();
+        } catch (UnavailableSecurityManagerException e) {
+            log.debug("非Web上下文，无法获取当前用户");
+            return null;
+        } catch (Exception e) {
+            log.debug("获取当前用户失败: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 获取请求对象
+     *
+     * @return 请求对象
+     */
+    private HttpServletRequest getRequest() {
+        try {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            return attributes != null ? attributes.getRequest() : null;
+        } catch (Exception e) {
+            log.debug("获取请求对象失败: {}", e.getMessage());
+            return null;
         }
     }
 
