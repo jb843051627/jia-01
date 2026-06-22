@@ -3,8 +3,13 @@ package com.fc.v2.service.impl;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -37,6 +42,15 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
 
     @Autowired
     private ITCustomerProfileService customerProfileService;
+
+    private static final Map<String, Set<String>> VALID_TRANSITIONS = new HashMap<>();
+    static {
+        VALID_TRANSITIONS.put("0", new HashSet<>(Arrays.asList("1", "4")));
+        VALID_TRANSITIONS.put("1", new HashSet<>(Arrays.asList("2", "4")));
+        VALID_TRANSITIONS.put("2", new HashSet<>(Arrays.asList("3")));
+        VALID_TRANSITIONS.put("3", Collections.emptySet());
+        VALID_TRANSITIONS.put("4", Collections.emptySet());
+    }
 
     @Override
     public Appointment selectAppointmentById(Long id) {
@@ -183,6 +197,15 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
     @Override
     @Transactional(rollbackFor = Exception.class)
     public AjaxResult updateStatus(Long id, String status) {
+        Appointment current = this.baseMapper.selectById(id);
+        if (current == null) {
+            return AjaxResult.error("预约不存在");
+        }
+        Set<String> allowed = VALID_TRANSITIONS.get(current.getStatus());
+        if (allowed == null || !allowed.contains(status)) {
+            return AjaxResult.error("非法状态流转：不能从" + AppointmentStatus.getNameByCode(current.getStatus()) + "变更为" + AppointmentStatus.getNameByCode(status));
+        }
+
         Appointment appointment = new Appointment();
         appointment.setId(id);
         appointment.setStatus(status);
