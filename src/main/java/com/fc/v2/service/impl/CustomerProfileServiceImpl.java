@@ -128,7 +128,7 @@ public class CustomerProfileServiceImpl extends ServiceImpl<CustomerProfileMappe
             profile = new CustomerProfile();
             profile.setCustomerName(customerName);
             profile.setCustomerPhone(customerPhone);
-            profile.setFirstServiceTime(new Date());
+            profile.setFirstServiceTime(null);
             profile.setLastServiceTime(new Date());
             profile.setTotalAppointments(0);
             profile.setTotalOrders(0);

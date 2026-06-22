@@ -1,5 +1,6 @@
 package com.fc.v2.service.impl;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -125,14 +126,32 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public int deleteAppointmentByIds(String ids) {
         String[] idsArray = ConvertUtil.toStrArray(ids);
-        return this.baseMapper.deleteBatchIds(Arrays.asList(idsArray));
+        List<String[]> customerInfoList = new ArrayList<>();
+        for (String id : idsArray) {
+            Appointment appointment = this.baseMapper.selectById(Long.parseLong(id));
+            if (appointment != null) {
+                customerInfoList.add(new String[]{appointment.getCustomerName(), appointment.getCustomerPhone()});
+            }
+        }
+        int result = this.baseMapper.deleteBatchIds(Arrays.asList(idsArray));
+        for (String[] info : customerInfoList) {
+            customerProfileService.refreshOrCreateProfile(info[0], info[1]);
+        }
+        return result;
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public int deleteAppointmentById(Long id) {
-        return this.baseMapper.deleteById(id);
+        Appointment appointment = this.baseMapper.selectById(id);
+        int result = this.baseMapper.deleteById(id);
+        if (appointment != null) {
+            customerProfileService.refreshOrCreateProfile(appointment.getCustomerName(), appointment.getCustomerPhone());
+        }
+        return result;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.fc.v2.service.impl;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -212,20 +213,34 @@ public class TOrderServiceImpl extends ServiceImpl<TOrderMapper, TOrder> impleme
     @Transactional(rollbackFor = Exception.class)
     public int deleteOrderByIds(String ids) {
         String[] idsArray = ConvertUtil.toStrArray(ids);
+        List<String[]> customerInfoList = new ArrayList<>();
         for (String id : idsArray) {
             Long orderId = Long.parseLong(id);
+            TOrder order = this.baseMapper.selectById(orderId);
+            if (order != null) {
+                customerInfoList.add(new String[]{order.getCustomerName(), order.getCustomerPhone()});
+            }
             restoreStock(orderId);
             tOrderItemMapper.deleteOrderItemsByOrderId(orderId);
         }
-        return this.baseMapper.deleteBatchIds(Arrays.asList(idsArray));
+        int result = this.baseMapper.deleteBatchIds(Arrays.asList(idsArray));
+        for (String[] info : customerInfoList) {
+            customerProfileService.refreshOrCreateProfile(info[0], info[1]);
+        }
+        return result;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public int deleteOrderById(Long id) {
+        TOrder order = this.baseMapper.selectById(id);
         restoreStock(id);
         tOrderItemMapper.deleteOrderItemsByOrderId(id);
-        return this.baseMapper.deleteById(id);
+        int result = this.baseMapper.deleteById(id);
+        if (order != null) {
+            customerProfileService.refreshOrCreateProfile(order.getCustomerName(), order.getCustomerPhone());
+        }
+        return result;
     }
 
     private void restoreStock(Long orderId) {
