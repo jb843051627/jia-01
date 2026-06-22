@@ -81,4 +81,28 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         order by a.appointment_time desc
     </select>
 
+    <select id="countAppointmentsByDateRange" resultType="java.lang.Integer">
+        select count(*) from t_appointment
+        where appointment_time &gt;= #{startDate}
+        and appointment_time &lt; date_add(#{endDate}, interval 1 day)
+        and status != '4'
+    </select>
+
+    <select id="countAppointmentsByStatus" resultType="java.lang.Integer">
+        select count(*) from t_appointment
+        where status = #{status}
+    </select>
+
+    <select id="countAppointmentsGroupByDate" resultType="com.fc.v2.model.custom.DailyTrendVO">
+        select 
+            date_format(appointment_time, '%Y-%m-%d') as date,
+            count(*) as appointmentCount
+        from t_appointment
+        where appointment_time &gt;= #{startDate}
+        and appointment_time &lt; date_add(#{endDate}, interval 1 day)
+        and status != '4'
+        group by date_format(appointment_time, '%Y-%m-%d')
+        order by date asc
+    </select>
+
 </mapper>

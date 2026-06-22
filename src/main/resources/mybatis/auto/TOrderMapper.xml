@@ -67,4 +67,30 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </where>
     </select>
 
+    <select id="countOrdersByDateRange" resultType="java.lang.Integer">
+        select count(*) from t_order
+        where create_time &gt;= #{startDate}
+        and create_time &lt; date_add(#{endDate}, interval 1 day)
+        and status != '4'
+    </select>
+
+    <select id="sumRevenueByDateRange" resultType="java.math.BigDecimal">
+        select ifnull(sum(order_amount), 0) from t_order
+        where pay_time &gt;= #{startDate}
+        and pay_time &lt; date_add(#{endDate}, interval 1 day)
+        and status in ('1', '2', '3')
+    </select>
+
+    <select id="sumRevenueGroupByDate" resultType="com.fc.v2.model.custom.DailyTrendVO">
+        select
+            date_format(pay_time, '%Y-%m-%d') as date,
+            ifnull(sum(order_amount), 0) as revenue
+        from t_order
+        where pay_time &gt;= #{startDate}
+        and pay_time &lt; date_add(#{endDate}, interval 1 day)
+        and status in ('1', '2', '3')
+        group by date_format(pay_time, '%Y-%m-%d')
+        order by date asc
+    </select>
+
 </mapper>

@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('运营数据看板')"/>
+    <link rel="stylesheet" th:href="@{/static/admin/css/other/console1.css}"/>
+    <style>
+        .dashboard-card {
+            border-radius: 4px;
+            background: #fff;
+            margin-bottom: 15px;
+        }
+        .dashboard-card .card-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+        }
+        .dashboard-card .card-body {
+            padding: 20px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            color: #fff;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: transform 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .stat-card.blue {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .stat-card.green {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+        .stat-card.orange {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+        .stat-card.purple {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            color: #333;
+        }
+        .stat-card.red {
+            background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
+        }
+        .stat-card.cyan {
+            background: linear-gradient(135deg, #0abde3 0%, #48dbfb 100%);
+        }
+        .stat-card .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+        .stat-card .stat-value {
+            font-size: 32px;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+        .stat-card .stat-unit {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-left: 5px;
+        }
+        .stat-card .stat-icon {
+            float: right;
+            font-size: 40px;
+            opacity: 0.3;
+            margin-top: -10px;
+        }
+        #trendChart, #pieChart {
+            width: 100%;
+            height: 400px;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+    </style>
+</head>
+<body class="pear-container">
+    <div>
+        <div class="layui-row layui-col-space15">
+            <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                <div class="stat-card blue">
+                    <i class="layui-icon layui-icon-date stat-icon"></i>
+                    <div class="stat-label">今日预约数</div>
+                    <div class="stat-value">
+                        <span id="todayAppointments">0</span>
+                        <span class="stat-unit">个</span>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                <div class="stat-card green">
+                    <i class="layui-icon layui-icon-template-1 stat-icon"></i>
+                    <div class="stat-label">本周预约数</div>
+                    <div class="stat-value">
+                        <span id="weekAppointments">0</span>
+                        <span class="stat-unit">个</span>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                <div class="stat-card orange">
+                    <i class="layui-icon layui-icon-form stat-icon"></i>
+                    <div class="stat-label">本月订单数</div>
+                    <div class="stat-value">
+                        <span id="monthOrders">0</span>
+                        <span class="stat-unit">单</span>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                <div class="stat-card red">
+                    <i class="layui-icon layui-icon-rmb stat-icon"></i>
+                    <div class="stat-label">本月收入</div>
+                    <div class="stat-value">
+                        ¥<span id="monthRevenue">0.00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                <div class="stat-card cyan">
+                    <i class="layui-icon layui-icon-send stat-icon"></i>
+                    <div class="stat-label">待派单数</div>
+                    <div class="stat-value">
+                        <span id="pendingDispatch">0</span>
+                        <span class="stat-unit">单</span>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                <div class="stat-card purple">
+                    <i class="layui-icon layui-icon-service stat-icon"></i>
+                    <div class="stat-label">待回访数</div>
+                    <div class="stat-value">
+                        <span id="pendingFollowUp">0</span>
+                        <span class="stat-unit">单</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="layui-row layui-col-space15">
+            <div class="layui-col-md8">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <i class="layui-icon layui-icon-chart"></i>
+                        近30天趋势
+                    </div>
+                    <div class="card-body">
+                        <div id="trendChart">
+                            <div class="loading">数据加载中...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md4">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <i class="layui-icon layui-icon-chart-screen"></i>
+                        服务类型占比
+                    </div>
+                    <div class="card-body">
+                        <div id="pieChart">
+                            <div class="loading">数据加载中...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<th:block th:include="include :: footer"/>
+<script>
+    layui.use(['layer', 'echarts', 'count'], function () {
+        let echarts = layui.echarts;
+        let count = layui.count;
+        let $ = layui.jquery;
+
+        let MODULE_PATH = rootPath + "/DashboardController";
+        let trendChart, pieChart;
+
+        function loadOverview() {
+            $.ajax({
+                url: MODULE_PATH + "/overview",
+                type: 'GET',
+                dataType: 'json',
+                success: function (result) {
+                    if (result.code == 200) {
+                        let data = result.data;
+                        count.up("todayAppointments", {
+                            time: 1500,
+                            num: data.todayAppointments || 0,
+                            regulator: 20
+                        });
+                        count.up("weekAppointments", {
+                            time: 1500,
+                            num: data.weekAppointments || 0,
+                            regulator: 30
+                        });
+                        count.up("monthOrders", {
+                            time: 1500,
+                            num: data.monthOrders || 0,
+                            regulator: 20
+                        });
+                        count.up("pendingDispatch", {
+                            time: 1500,
+                            num: data.pendingDispatch || 0,
+                            regulator: 15
+                        });
+                        count.up("pendingFollowUp", {
+                            time: 1500,
+                            num: data.pendingFollowUp || 0,
+                            regulator: 15
+                        });
+                        let revenue = parseFloat(data.monthRevenue || 0);
+                        count.up("monthRevenue", {
+                            time: 1500,
+                            bit: 2,
+                            num: revenue,
+                            regulator: Math.max(revenue / 50, 10)
+                        });
+                    }
+                },
+                error: function () {
+                    console.error('加载概览数据失败');
+                }
+            });
+        }
+
+        function loadTrend() {
+            $.ajax({
+                url: MODULE_PATH + "/trend",
+                type: 'GET',
+                dataType: 'json',
+                success: function (result) {
+                    if (result.code == 200) {
+                        let data = result.data || [];
+                        let dates = [];
+                        let appointmentCounts = [];
+                        let revenues = [];
+
+                        for (let i = 0; i < data.length; i++) {
+                            let item = data[i];
+                            dates.push(item.date.substring(5));
+                            appointmentCounts.push(item.appointmentCount || 0);
+                            revenues.push(parseFloat(item.revenue) || 0);
+                        }
+
+                        initTrendChart(dates, appointmentCounts, revenues);
+                    }
+                },
+                error: function () {
+                    console.error('加载趋势数据失败');
+                    initTrendChart([], [], []);
+                }
+            });
+        }
+
+        function loadServiceTypeStats() {
+            $.ajax({
+                url: MODULE_PATH + "/service-type-stats",
+                type: 'GET',
+                dataType: 'json',
+                success: function (result) {
+                    if (result.code == 200) {
+                        let data = result.data || [];
+                        let pieData = [];
+                        for (let i = 0; i < data.length; i++) {
+                            pieData.push({
+                                value: data[i].count || 0,
+                                name: data[i].name
+                            });
+                        }
+                        initPieChart(pieData);
+                    }
+                },
+                error: function () {
+                    console.error('加载服务类型统计失败');
+                    initPieChart([]);
+                }
+            });
+        }
+
+        function initTrendChart(dates, appointmentCounts, revenues) {
+            trendChart = echarts.init(document.getElementById('trendChart'), 'walden');
+
+            let option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'cross',
+                        crossStyle: {
+                            color: '#999'
+                        }
+                    }
+                },
+                legend: {
+                    data: ['预约数', '收入'],
+                    top: 0
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    top: '15%',
+                    containLabel: true
+                },
+                xAxis: [
+                    {
+                        type: 'category',
+                        data: dates,
+                        axisPointer: {
+                            type: 'shadow'
+                        },
+                        axisLine: {
+                            lineStyle: {
+                                color: '#ddd'
+                            }
+                        },
+                        axisLabel: {
+                            color: '#666',
+                            rotate: 45,
+                            interval: Math.floor(dates.length / 10)
+                        }
+                    }
+                ],
+                yAxis: [
+                    {
+                        type: 'value',
+                        name: '预约数',
+                        min: 0,
+                        axisLine: {
+                            show: true,
+                            lineStyle: {
+                                color: '#5470C6'
+                            }
+                        },
+                        axisLabel: {
+                            formatter: '{value} 个',
+                            color: '#666'
+                        },
+                        splitLine: {
+                            lineStyle: {
+                                type: 'dashed',
+                                color: '#eee'
+                            }
+                        }
+                    },
+                    {
+                        type: 'value',
+                        name: '收入',
+                        min: 0,
+                        axisLine: {
+                            show: true,
+                            lineStyle: {
+                                color: '#91CC75'
+                            }
+                        },
+                        axisLabel: {
+                            formatter: '¥{value}',
+                            color: '#666'
+                        },
+                        splitLine: {
+                            show: false
+                        }
+                    }
+                ],
+                series: [
+                    {
+                        name: '预约数',
+                        type: 'line',
+                        data: appointmentCounts,
+                        smooth: true,
+                        symbol: 'circle',
+                        symbolSize: 8,
+                        lineStyle: {
+                            width: 3,
+                            color: {
+                                type: 'linear',
+                                x: 0, y: 0, x2: 1, y2: 0,
+                                colorStops: [
+                                    { offset: 0, color: '#667eea' },
+                                    { offset: 1, color: '#764ba2' }
+                                ]
+                            }
+                        },
+                        itemStyle: {
+                            color: '#667eea',
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        },
+                        areaStyle: {
+                            color: {
+                                type: 'linear',
+                                x: 0, y: 0, x2: 0, y2: 1,
+                                colorStops: [
+                                    { offset: 0, color: 'rgba(102,126,234,0.3)' },
+                                    { offset: 1, color: 'rgba(102,126,234,0.05)' }
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        name: '收入',
+                        type: 'line',
+                        yAxisIndex: 1,
+                        data: revenues,
+                        smooth: true,
+                        symbol: 'circle',
+                        symbolSize: 8,
+                        lineStyle: {
+                            width: 3,
+                            color: {
+                                type: 'linear',
+                                x: 0, y: 0, x2: 1, y2: 0,
+                                colorStops: [
+                                    { offset: 0, color: '#43e97b' },
+                                    { offset: 1, color: '#38f9d7' }
+                                ]
+                            }
+                        },
+                        itemStyle: {
+                            color: '#43e97b',
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        },
+                        areaStyle: {
+                            color: {
+                                type: 'linear',
+                                x: 0, y: 0, x2: 0, y2: 1,
+                                colorStops: [
+                                    { offset: 0, color: 'rgba(67,233,123,0.3)' },
+                                    { offset: 1, color: 'rgba(67,233,123,0.05)' }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            };
+
+            trendChart.setOption(option);
+        }
+
+        function initPieChart(data) {
+            pieChart = echarts.init(document.getElementById('pieChart'), 'walden');
+
+            let option = {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{b}: {c} ({d}%)'
+                },
+                legend: {
+                    orient: 'vertical',
+                    left: 'left',
+                    top: 'center'
+                },
+                series: [
+                    {
+                        name: '服务类型',
+                        type: 'pie',
+                        radius: ['40%', '70%'],
+                        avoidLabelOverlap: false,
+                        itemStyle: {
+                            borderRadius: 8,
+                            borderColor: '#fff',
+                            borderWidth: 2
+                        },
+                        label: {
+                            show: true,
+                            formatter: '{b}\n{d}%'
+                        },
+                        emphasis: {
+                            label: {
+                                show: true,
+                                fontSize: 16,
+                                fontWeight: 'bold'
+                            },
+                            itemStyle: {
+                                shadowBlur: 10,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        },
+                        data: data.length > 0 ? data : [{value: 1, name: '暂无数据'}],
+                        color: ['#5470C6', '#91CC75', '#FAC858', '#EE6666', '#73C0DE', '#3BA272', '#FC8452', '#9A60B4', '#EA7CCC']
+                    }
+                ]
+            };
+
+            pieChart.setOption(option);
+        }
+
+        window.onresize = function () {
+            if (trendChart) trendChart.resize();
+            if (pieChart) pieChart.resize();
+        };
+
+        loadOverview();
+        loadTrend();
+        loadServiceTypeStats();
+
+        setInterval(function() {
+            loadOverview();
+        }, 60000);
+    });
+</script>
+</body>
+</html>

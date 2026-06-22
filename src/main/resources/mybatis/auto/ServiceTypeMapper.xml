@@ -59,4 +59,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where id = #{id}
     </update>
 
+    <select id="countOrdersByServiceType" resultType="com.fc.v2.model.custom.ServiceTypeStatsVO">
+        select
+            st.name as name,
+            sum(oi.quantity) as count
+        from t_order_item oi
+        left join t_service_type st on oi.service_type_id = st.id
+        left join t_order o on oi.order_id = o.id
+        where o.status != '4'
+        group by st.id, st.name
+        order by count desc
+    </select>
+
 </mapper>
