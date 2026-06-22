@@ -5,6 +5,7 @@ import com.fc.v2.common.base.BaseController;
 import com.fc.v2.common.domain.AjaxResult;
 import com.fc.v2.common.domain.ResultTable;
 import com.fc.v2.common.log.Log;
+import com.fc.v2.common.quartz.QuartzSchedulerUtil;
 import com.fc.v2.model.auto.TSysQuartzJob;
 import com.fc.v2.service.ITSysQuartzJobService;
 import com.fc.v2.util.StringUtils;
@@ -12,11 +13,17 @@ import com.github.pagehelper.PageInfo;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.quartz.CronExpression;
 import org.quartz.SchedulerException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
  * @author Jan 橙寂
@@ -32,6 +39,9 @@ public class SysQuartzJobController extends BaseController {
 
     @Autowired
     private ITSysQuartzJobService sysQuartzJobService;
+
+    @Autowired
+    private QuartzSchedulerUtil quartzSchedulerUtil;
 
     /**
      * 展示页面
@@ -94,8 +104,12 @@ public class SysQuartzJobController extends BaseController {
     @PostMapping("/add")
     @RequiresPermissions("gen:sysQuartzJob:add")
     @ResponseBody
-    public AjaxResult add(TSysQuartzJob sysQuartzJob) {
-        return toAjax(sysQuartzJobService.insertTSysQuartzJob(sysQuartzJob));
+    public AjaxResult add(TSysQuartzJob sysQuartzJob) throws SchedulerException {
+        int rows = sysQuartzJobService.insertTSysQuartzJob(sysQuartzJob);
+        if (rows > 0) {
+            quartzSchedulerUtil.modifyJob(sysQuartzJob);
+        }
+        return toAjax(rows);
     }
 
     /**
@@ -109,7 +123,15 @@ public class SysQuartzJobController extends BaseController {
     @DeleteMapping("/remove")
     @RequiresPermissions("gen:sysQuartzJob:remove")
     @ResponseBody
-    public AjaxResult remove(String ids) {
+    public AjaxResult remove(String ids) throws SchedulerException {
+        String[] idArr = ids.split(",");
+        for (String idStr : idArr) {
+            Long id = Long.parseLong(idStr);
+            TSysQuartzJob job = sysQuartzJobService.selectTSysQuartzJobById(id);
+            if (job != null) {
+                quartzSchedulerUtil.deleteJob(job);
+            }
+        }
         return toAjax(sysQuartzJobService.deleteTSysQuartzJobByIds(ids));
     }
 
@@ -152,8 +174,12 @@ public class SysQuartzJobController extends BaseController {
     @RequiresPermissions("gen:sysQuartzJob:edit")
     @PostMapping("/edit")
     @ResponseBody
-    public AjaxResult editSave(TSysQuartzJob record) {
-        return toAjax(sysQuartzJobService.updateTSysQuartzJob(record));
+    public AjaxResult editSave(TSysQuartzJob record) throws SchedulerException {
+        int rows = sysQuartzJobService.updateTSysQuartzJob(record);
+        if (rows > 0) {
+            quartzSchedulerUtil.modifyJob(record);
+        }
+        return toAjax(rows);
     }
 
     /**
@@ -189,5 +215,33 @@ public class SysQuartzJobController extends BaseController {
         TSysQuartzJob newJob = sysQuartzJobService.selectTSysQuartzJobById(id);
         sysQuartzJobService.run(newJob);
         return success();
+    }
+
+    /**
+     * 获取cron表达式最近5次触发时间
+     *
+     * @param cronExpression
+     * @return
+     */
+    @ApiOperation(value = "获取cron最近5次触发时间", notes = "获取cron最近5次触发时间")
+    @GetMapping("/cronPreview")
+    @ResponseBody
+    public AjaxResult cronPreview(@RequestParam String cronExpression) {
+        try {
+            CronExpression cron = new CronExpression(cronExpression);
+            List<String> triggerTimes = new ArrayList<>();
+            Date nextTime = new Date();
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            for (int i = 0; i < 5; i++) {
+                nextTime = cron.getNextValidTimeAfter(nextTime);
+                if (nextTime == null) {
+                    break;
+                }
+                triggerTimes.add(sdf.format(nextTime));
+            }
+            return AjaxResult.successData(200, triggerTimes);
+        } catch (Exception e) {
+            return error("cron表达式格式错误：" + e.getMessage());
+        }
     }
 }

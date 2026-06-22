@@ -4,40 +4,93 @@
     <th:block th:include="include :: header('定时任务列表')"/>
 </head>
 <body class="pear-container">
-<div class="layui-card">
-    <div class="layui-card-body">
-        <form class="layui-form" action="">
-            <div class="layui-form-item">
-                <label class="layui-form-label">任务名称</label>
-                <div class="layui-input-inline">
-                    <input type="text" name="jobName" placeholder="" class="layui-input">
-                </div>
 
-                <label class="layui-form-label">任务状态</label>
-                <div class="layui-input-inline">
-                    <select name="status" class="layui-input">
-                        <option value="">请选择任务状态</option>
-                        <option value="0">正常</option>
-                        <option value="1">暂停</option>
-                    </select>
+<div class="layui-tab layui-tab-brief" lay-filter="jobTab">
+    <ul class="layui-tab-title">
+        <li class="layui-this" lay-id="jobList">任务管理</li>
+        <li lay-id="jobLog">执行日志</li>
+    </ul>
+    <div class="layui-tab-content">
+        <div class="layui-tab-item layui-show">
+            <div class="layui-card">
+                <div class="layui-card-body">
+                    <form class="layui-form" action="">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">任务名称</label>
+                            <div class="layui-input-inline">
+                                <input type="text" name="jobName" placeholder="" class="layui-input">
+                            </div>
+
+                            <label class="layui-form-label">任务状态</label>
+                            <div class="layui-input-inline">
+                                <select name="status" class="layui-input">
+                                    <option value="">请选择任务状态</option>
+                                    <option value="0">正常</option>
+                                    <option value="1">暂停</option>
+                                </select>
+                            </div>
+                            <button class="pear-btn pear-btn-md pear-btn-primary" lay-submit lay-filter="sysQuartzJob-query">
+                                <i class="layui-icon layui-icon-search"></i>
+                                查询
+                            </button>
+                            <button type="reset" class="pear-btn pear-btn-md">
+                                <i class="layui-icon layui-icon-refresh"></i>
+                                重置
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                <button class="pear-btn pear-btn-md pear-btn-primary" lay-submit lay-filter="sysQuartzJob-query">
-                    <i class="layui-icon layui-icon-search"></i>
-                    查询
-                </button>
-                <button type="reset" class="pear-btn pear-btn-md">
-                    <i class="layui-icon layui-icon-refresh"></i>
-                    重置
-                </button>
             </div>
-        </form>
+            <div class="layui-card">
+                <div class="layui-card-body">
+                    <table id="sysQuartzJob-table" lay-filter="sysQuartzJob-table"></table>
+                </div>
+            </div>
+        </div>
+
+        <div class="layui-tab-item">
+            <div class="layui-card">
+                <div class="layui-card-body">
+                    <form class="layui-form" action="">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">任务名称</label>
+                            <div class="layui-input-inline">
+                                <input type="text" name="jobName" id="logJobName" placeholder="" class="layui-input">
+                            </div>
+
+                            <label class="layui-form-label">执行状态</label>
+                            <div class="layui-input-inline">
+                                <select name="status" class="layui-input">
+                                    <option value="">请选择执行状态</option>
+                                    <option value="0">成功</option>
+                                    <option value="1">失败</option>
+                                </select>
+                            </div>
+                            <button class="pear-btn pear-btn-md pear-btn-primary" lay-submit lay-filter="sysQuartzJobLog-query">
+                                <i class="layui-icon layui-icon-search"></i>
+                                查询
+                            </button>
+                            <button type="reset" class="pear-btn pear-btn-md">
+                                <i class="layui-icon layui-icon-refresh"></i>
+                                重置
+                            </button>
+                            <button shiro:hasPermission="gen:sysQuartzJobLog:remove" class="pear-btn pear-btn-md pear-btn-danger" id="cleanLogBtn">
+                                <i class="layui-icon layui-icon-delete"></i>
+                                清空日志
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="layui-card">
+                <div class="layui-card-body">
+                    <table id="sysQuartzJobLog-table" lay-filter="sysQuartzJobLog-table"></table>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
-<div class="layui-card">
-    <div class="layui-card-body">
-        <table id="sysQuartzJob-table" lay-filter="sysQuartzJob-table"></table>
-    </div>
-</div>
+
 </body>
 
 <script type="text/html" id="role-toolbar">
@@ -52,24 +105,14 @@
 </script>
 
 <script type="text/html" id="sysQuartzJob-bar">
-
-    <button shiro:hasPermission="gen:sysQuartzJob:edit" class="pear-btn pear-btn-primary pear-btn-sm" lay-event="edit" title="修改"><i class="layui-icon layui-icon-edit"></i>
-    </button>
-
-    <button shiro:hasPermission="gen:sysQuartzJob:remove" class="pear-btn pear-btn-danger pear-btn-sm" lay-event="remove" title="删除"><i class="layui-icon layui-icon-delete"></i>
-    </button>
-
-
-    <button shiro:hasPermission="gen:sysQuartzJob:add" class="pear-btn pear-btn-warming pear-btn-md" lay-event="run" title="执行一次"><i class="layui-icon layui-icon-triangle-r"></i>
-    </button>
-
-
+    <button shiro:hasPermission="gen:sysQuartzJob:edit" class="pear-btn pear-btn-primary pear-btn-sm" lay-event="edit" title="编辑"><i class="layui-icon layui-icon-edit"></i></button>
+    <button shiro:hasPermission="gen:sysQuartzJob:add" class="pear-btn pear-btn-warming pear-btn-sm" lay-event="run" title="立即执行"><i class="layui-icon layui-icon-triangle-r"></i></button>
+    <button shiro:hasPermission="gen:sysQuartzJob:remove" class="pear-btn pear-btn-danger pear-btn-sm" lay-event="remove" title="删除"><i class="layui-icon layui-icon-delete"></i></button>
 </script>
 
 <script type="text/html" id="sysQuartzJob-enable">
-    <input type="checkbox" name="enable" value="{{d.id}}" lay-skin="switch" lay-text="启用|禁用" lay-filter="sysQuartzJob-enable" {{ d.status== 0 ? 'checked' : '' }}>
+    <input type="checkbox" name="enable" value="{{d.id}}" lay-skin="switch" lay-text="启用|暂停" lay-filter="sysQuartzJob-enable" {{ d.status== 0 ? 'checked' : '' }}>
 </script>
-
 
 <script type="text/html" id="sysQuartzJob-misfirePolicy">
     {{#if (d.misfirePolicy == 1) { }}
@@ -89,31 +132,69 @@
     {{# } }}
 </script>
 
+<script type="text/html" id="log-toolbar">
+    <button shiro:hasPermission="gen:sysQuartzJobLog:remove" class="pear-btn pear-btn-danger pear-btn-md" lay-event="batchRemoveLog">
+        <i class="layui-icon layui-icon-delete"></i>
+        批量删除
+    </button>
+</script>
+
+<script type="text/html" id="log-status">
+    {{#if (d.status == 0) { }}
+    <span class="layui-badge layui-bg-green">成功</span>
+    {{# }else if(d.status == 1){ }}
+    <span class="layui-badge layui-bg-red">失败</span>
+    {{# } }}
+</script>
+
+<script type="text/html" id="log-bar">
+    <button class="pear-btn pear-btn-primary pear-btn-sm" lay-event="detail" title="详情"><i class="layui-icon layui-icon-read"></i></button>
+    <button shiro:hasPermission="gen:sysQuartzJobLog:remove" class="pear-btn pear-btn-danger pear-btn-sm" lay-event="removeLog" title="删除"><i class="layui-icon layui-icon-delete"></i></button>
+</script>
 
 <th:block th:include="include :: footer"/>
 <script>
-    layui.use(['table', 'form', 'jquery'], function () {
+    layui.use(['table', 'form', 'jquery', 'element', 'layer'], function () {
         let table = layui.table;
         let form = layui.form;
         let $ = layui.jquery;
+        let element = layui.element;
 
-        let MODULE_PATH = rootPath+"/SysQuartzJobController";
+        let MODULE_PATH = rootPath + "/SysQuartzJobController";
+        let LOG_MODULE_PATH = rootPath + "/SysQuartzJobLogController";
+
         let cols = [
             [
                 {type: 'checkbox'},
                 {title: 'ID', field: 'id', align: 'center', hide: true},
-                {title: '任务名称', field: 'jobName', align: 'left'},
-                {title: '任务组名', field: 'jobGroup', align: 'left'},
-                {title: '调用目标字符串', field: 'invokeTarget', align: 'left'},
-                {title: 'cron执行表达式', field: 'cronExpression', align: 'left'},
-                {title: 'cron计划策略', field: 'misfirePolicy', align: 'left',toolbar: '#sysQuartzJob-misfirePolicy'},
-                {title: '是否并发执行', field: 'concurrent', align: 'left',toolbar: '#sysQuartzJob-concurrent'},
-                {title: '任务状态', field: 'status', align: 'center',toolbar: '#sysQuartzJob-enable'},
-                {title: '操作', toolbar: '#sysQuartzJob-bar', align: 'center'}
+                {title: '任务名称', field: 'jobName', align: 'left', width: 130},
+                {title: '任务组名', field: 'jobGroup', align: 'left', width: 100},
+                {title: '调用目标', field: 'invokeTarget', align: 'left', minWidth: 200},
+                {title: 'cron表达式', field: 'cronExpression', align: 'left', width: 140},
+                {title: '计划策略', field: 'misfirePolicy', align: 'left', width: 100, toolbar: '#sysQuartzJob-misfirePolicy'},
+                {title: '并发', field: 'concurrent', align: 'center', width: 80, toolbar: '#sysQuartzJob-concurrent'},
+                {title: '状态', field: 'status', align: 'center', width: 100, toolbar: '#sysQuartzJob-enable'},
+                {title: '创建时间', field: 'createTime', align: 'center', width: 170},
+                {title: '操作', toolbar: '#sysQuartzJob-bar', align: 'center', width: 180, fixed: 'right'}
             ]
-        ]
+        ];
 
-        //table表单列表
+        let logCols = [
+            [
+                {type: 'checkbox'},
+                {title: 'ID', field: 'id', align: 'center', hide: true},
+                {title: '任务名称', field: 'jobName', align: 'left', width: 150},
+                {title: '任务组名', field: 'jobGroup', align: 'left', width: 100},
+                {title: '调用目标', field: 'invokeTarget', align: 'left', minWidth: 200},
+                {title: '日志信息', field: 'jobMessage', align: 'left', minWidth: 150},
+                {title: '执行状态', field: 'status', align: 'center', width: 100, toolbar: '#log-status'},
+                {title: '开始时间', field: 'startTime', align: 'center', width: 170},
+                {title: '结束时间', field: 'endTime', align: 'center', width: 170},
+                {title: '异常信息', field: 'exceptionInfo', align: 'left', minWidth: 200},
+                {title: '操作', toolbar: '#log-bar', align: 'center', width: 120, fixed: 'right'}
+            ]
+        ];
+
         table.render({
             elem: '#sysQuartzJob-table',
             url: MODULE_PATH + '/list',
@@ -132,79 +213,108 @@
             }
         });
 
-        //table图标事件绑定
+        table.render({
+            elem: '#sysQuartzJobLog-table',
+            url: LOG_MODULE_PATH + '/list',
+            page: true,
+            method: 'get',
+            cols: logCols,
+            skin: 'line',
+            toolbar: '#log-toolbar',
+            defaultToolbar: [{
+                layEvent: 'refreshLog',
+                icon: 'layui-icon-refresh',
+            }, 'filter', 'print', 'exports'],
+            where: {
+                orderByColumn: "id",
+                isAsc: "desc"
+            }
+        });
+
         table.on('tool(sysQuartzJob-table)', function (obj) {
             if (obj.event === 'remove') {
                 window.remove(obj);
             } else if (obj.event === 'edit') {
                 window.edit(obj);
-            }else if (obj.event === 'run') {
+            } else if (obj.event === 'run') {
                 window.run(obj);
             }
         });
 
-        //table工具栏绑定
         table.on('toolbar(sysQuartzJob-table)', function (obj) {
             if (obj.event === 'add') {
                 window.add();
             } else if (obj.event === 'refresh') {
-                window.refresh();
+                table.reload('sysQuartzJob-table');
             } else if (obj.event === 'batchRemove') {
                 window.batchRemove(obj);
             }
         });
 
-        //查询按钮绑定
+        table.on('tool(sysQuartzJobLog-table)', function (obj) {
+            if (obj.event === 'removeLog') {
+                window.removeLog(obj);
+            } else if (obj.event === 'detail') {
+                window.viewLogDetail(obj);
+            }
+        });
+
+        table.on('toolbar(sysQuartzJobLog-table)', function (obj) {
+            if (obj.event === 'refreshLog') {
+                table.reload('sysQuartzJobLog-table');
+            } else if (obj.event === 'batchRemoveLog') {
+                window.batchRemoveLog(obj);
+            }
+        });
+
         form.on('submit(sysQuartzJob-query)', function (data) {
-            table.reload('sysQuartzJob-table', {where: data.field})
+            table.reload('sysQuartzJob-table', {where: data.field});
             return false;
         });
 
+        form.on('submit(sysQuartzJobLog-query)', function (data) {
+            table.reload('sysQuartzJobLog-table', {where: data.field});
+            return false;
+        });
 
-        //添加
         window.add = function () {
             layer.open({
                 type: 2,
-                title: '新增',
+                title: '新增定时任务',
                 shade: 0.1,
-                area: ['800px', '500px'],
+                area: ['850px', '650px'],
                 content: MODULE_PATH + '/add'
             });
-        }
-        //修改
+        };
+
         window.edit = function (obj) {
             layer.open({
                 type: 2,
-                title: '修改',
+                title: '编辑定时任务',
                 shade: 0.1,
-                area: ['800px', '500px'],
+                area: ['850px', '650px'],
                 content: MODULE_PATH + '/edit/' + obj.data['id']
             });
-        }
+        };
 
-        //状态切换绑定
         form.on('switch(sysQuartzJob-enable)', function (obj) {
             let operate;
-
             if (obj.elem.checked) {
                 operate = 0;
             } else {
                 operate = 1;
             }
-
-            let loading = layer.load()
-
+            let loading = layer.load();
             $.ajax({
-                url: MODULE_PATH+'/changeStatus',
-                data: JSON.stringify({id: this.value,status:operate}),
+                url: MODULE_PATH + '/changeStatus',
+                data: JSON.stringify({id: this.value, status: operate}),
                 dataType: 'json',
                 contentType: 'application/json',
                 type: 'put',
                 success: function (result) {
                     layer.close(loading);
-                    if (result.code==200) {
-                        layer.msg(result.msg, {icon: 1, time: 1000}, function () {
-                        });
+                    if (result.code == 200) {
+                        layer.msg(result.msg, {icon: 1, time: 1000});
                     } else {
                         layer.msg(result.msg, {icon: 2, time: 1000});
                     }
@@ -212,9 +322,8 @@
             })
         });
 
-        //执行一次
         window.run = function (obj) {
-            layer.confirm('确定要执行一次吗', {icon: 3, title: '提示'}, function (index) {
+            layer.confirm('确定要立即执行一次该任务吗？', {icon: 3, title: '提示'}, function (index) {
                 layer.close(index);
                 let loading = layer.load();
                 $.ajax({
@@ -223,8 +332,12 @@
                     type: 'get',
                     success: function (result) {
                         layer.close(loading);
-                        if (result.code==200) {
+                        if (result.code == 200) {
                             layer.msg(result.msg, {icon: 1, time: 1000}, function () {
+                                element.tabChange('jobTab', 'jobLog');
+                                $("#logJobName").val(obj.data['jobName']);
+                                form.render('select');
+                                table.reload('sysQuartzJobLog-table', {where: {jobName: obj.data['jobName']}});
                             });
                         } else {
                             layer.msg(result.msg, {icon: 2, time: 1000});
@@ -232,11 +345,10 @@
                     }
                 })
             });
-        }
+        };
 
-        //删除
         window.remove = function (obj) {
-            layer.confirm('确定要删除该定时任务', {icon: 3, title: '提示'}, function (index) {
+            layer.confirm('确定要删除该定时任务吗？', {icon: 3, title: '提示'}, function (index) {
                 layer.close(index);
                 let loading = layer.load();
                 $.ajax({
@@ -245,7 +357,7 @@
                     type: 'delete',
                     success: function (result) {
                         layer.close(loading);
-                        if (result.code==200) {
+                        if (result.code == 200) {
                             layer.msg(result.msg, {icon: 1, time: 1000}, function () {
                                 obj.del();
                             });
@@ -255,9 +367,8 @@
                     }
                 })
             });
-        }
+        };
 
-        //批量删除
         window.batchRemove = function (obj) {
             let data = table.checkStatus(obj.config.id).data;
             if (data.length === 0) {
@@ -269,7 +380,7 @@
                 ids += data[i].id + ",";
             }
             ids = ids.substr(0, ids.length - 1);
-            layer.confirm('确定要删除这些定时任务', {icon: 3, title: '提示'}, function (index) {
+            layer.confirm('确定要删除这些定时任务吗？', {icon: 3, title: '提示'}, function (index) {
                 layer.close(index);
                 let loading = layer.load();
                 $.ajax({
@@ -278,7 +389,7 @@
                     type: 'delete',
                     success: function (result) {
                         layer.close(loading);
-                        if (result.code==200) {
+                        if (result.code == 200) {
                             layer.msg(result.msg, {icon: 1, time: 1000}, function () {
                                 table.reload('sysQuartzJob-table');
                             });
@@ -288,11 +399,105 @@
                     }
                 })
             });
-        }
-        //刷新按钮
-        window.refresh = function () {
-            table.reload('sysQuartzJob-table');
-        }
+        };
+
+        window.removeLog = function (obj) {
+            layer.confirm('确定要删除该执行日志吗？', {icon: 3, title: '提示'}, function (index) {
+                layer.close(index);
+                let loading = layer.load();
+                $.ajax({
+                    url: LOG_MODULE_PATH + "/remove?ids=" + obj.data['id'],
+                    dataType: 'json',
+                    type: 'delete',
+                    success: function (result) {
+                        layer.close(loading);
+                        if (result.code == 200) {
+                            layer.msg(result.msg, {icon: 1, time: 1000}, function () {
+                                obj.del();
+                            });
+                        } else {
+                            layer.msg(result.msg, {icon: 2, time: 1000});
+                        }
+                    }
+                })
+            });
+        };
+
+        window.batchRemoveLog = function (obj) {
+            let data = table.checkStatus('sysQuartzJobLog-table').data;
+            if (data.length === 0) {
+                layer.msg("未选中数据", {icon: 3, time: 1000});
+                return false;
+            }
+            let ids = "";
+            for (let i = 0; i < data.length; i++) {
+                ids += data[i].id + ",";
+            }
+            ids = ids.substr(0, ids.length - 1);
+            layer.confirm('确定要批量删除这些执行日志吗？', {icon: 3, title: '提示'}, function (index) {
+                layer.close(index);
+                let loading = layer.load();
+                $.ajax({
+                    url: LOG_MODULE_PATH + "/remove?ids=" + ids,
+                    dataType: 'json',
+                    type: 'delete',
+                    success: function (result) {
+                        layer.close(loading);
+                        if (result.code == 200) {
+                            layer.msg(result.msg, {icon: 1, time: 1000}, function () {
+                                table.reload('sysQuartzJobLog-table');
+                            });
+                        } else {
+                            layer.msg(result.msg, {icon: 2, time: 1000});
+                        }
+                    }
+                })
+            });
+        };
+
+        window.viewLogDetail = function (obj) {
+            let data = obj.data;
+            let content = '<div style="padding: 20px;">';
+            content += '<table class="layui-table" lay-skin="line">';
+            content += '<colgroup><col width="120"><col></colgroup>';
+            content += '<tr><td><b>任务名称：</b></td><td>' + (data.jobName || '') + '</td></tr>';
+            content += '<tr><td><b>任务组名：</b></td><td>' + (data.jobGroup || '') + '</td></tr>';
+            content += '<tr><td><b>调用目标：</b></td><td>' + (data.invokeTarget || '') + '</td></tr>';
+            content += '<tr><td><b>日志信息：</b></td><td>' + (data.jobMessage || '') + '</td></tr>';
+            content += '<tr><td><b>执行状态：</b></td><td>' + (data.status == 0 ? '<span class="layui-badge layui-bg-green">成功</span>' : '<span class="layui-badge layui-bg-red">失败</span>') + '</td></tr>';
+            content += '<tr><td><b>开始时间：</b></td><td>' + (data.startTime || '') + '</td></tr>';
+            content += '<tr><td><b>结束时间：</b></td><td>' + (data.endTime || '') + '</td></tr>';
+            content += '<tr><td><b>异常信息：</b></td><td style="color:red;word-break:break-all;">' + (data.exceptionInfo || '无异常') + '</td></tr>';
+            content += '</table></div>';
+            layer.open({
+                type: 1,
+                title: '执行日志详情',
+                area: ['700px', '500px'],
+                content: content
+            });
+        };
+
+        $("#cleanLogBtn").on('click', function () {
+            layer.confirm('确定要清空所有执行日志吗？此操作不可恢复！', {icon: 3, title: '警告'}, function (index) {
+                layer.close(index);
+                let loading = layer.load();
+                $.ajax({
+                    url: LOG_MODULE_PATH + "/clean",
+                    dataType: 'json',
+                    type: 'delete',
+                    success: function (result) {
+                        layer.close(loading);
+                        if (result.code == 200) {
+                            layer.msg(result.msg, {icon: 1, time: 1000}, function () {
+                                table.reload('sysQuartzJobLog-table');
+                            });
+                        } else {
+                            layer.msg(result.msg, {icon: 2, time: 1000});
+                        }
+                    }
+                })
+            });
+        });
     })
 </script>
 </html>

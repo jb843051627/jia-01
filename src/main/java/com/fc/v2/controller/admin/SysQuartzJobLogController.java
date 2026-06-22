@@ -118,4 +118,23 @@ public class SysQuartzJobLogController extends BaseController {
         sysQuartzJobLogService.cleanQuartzJobLog();
         return success();
     }
+
+    /**
+     * 根据任务名称查询日志列表
+     * 用于前端任务详情页的执行日志Tab
+     *
+     * @param jobName 任务名称
+     * @return
+     */
+    @ApiOperation(value = "根据任务名称查询日志", notes = "根据任务名称查询日志")
+    @GetMapping("/listByJobName")
+    @ResponseBody
+    public ResultTable listByJobName(@RequestParam String jobName) {
+        QueryWrapper<TSysQuartzJobLog> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("job_name", jobName);
+        queryWrapper.orderByDesc("create_time");
+        startPage();
+        PageInfo<TSysQuartzJobLog> page = new PageInfo<>(sysQuartzJobLogService.selectTSysQuartzJobLogList(queryWrapper));
+        return pageTable(page.getList(), page.getTotal());
+    }
 }

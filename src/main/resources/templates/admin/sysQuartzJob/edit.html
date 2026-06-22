@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <th:block th:include="include :: header('定时任务修改')"/>
+    <th:block th:include="include :: header('定时任务编辑')"/>
 </head>
 <body>
 <form class="layui-form" action=""  th:object="${SysQuartzJob}">
@@ -16,9 +16,9 @@
                     </div>
                 </div>
                 <div class="layui-form-item">
-                    <label class="layui-form-label">任务名称</label>
+                    <label class="layui-form-label"><span style="color:red;">*</span> 任务名称</label>
                     <div class="layui-input-block">
-                        <input th:value="*{jobName}" type="text" name="jobName" autocomplete="off" placeholder="任务名称" class="layui-input">
+                        <input th:value="*{jobName}" type="text" name="jobName" lay-verify="required" autocomplete="off" placeholder="请输入任务名称" class="layui-input">
                     </div>
                 </div>
                 <div class="layui-form-item">
@@ -26,32 +26,55 @@
                     <div class="layui-input-block">
                         <select name="jobGroup" id="jobGroup" th:field="*{jobGroup}">
                             <option value="DEFAULT">默认</option>
-	                		<option value="SYSTEM">系统</option>
+                            <option value="SYSTEM">系统</option>
                         </select>
                     </div>
                 </div>
                 <div class="layui-form-item">
-                    <label class="layui-form-label">调用目标字符串</label>
+                    <label class="layui-form-label"><span style="color:red;">*</span> 调用目标</label>
                     <div class="layui-input-block">
-                        <input th:value="*{invokeTarget}" type="text" name="invokeTarget" autocomplete="off"  class="layui-input" placeholder="调用目标字符串">
-                        <blockquote class="layui-elem-quote">
-                            Bean调用示例：v2Task.runTask2(1,2l,'asa',true,2D)
-                            <br>
-                            Class类调用示例：com.fc.test.common.quartz.task.runTask2('ry')
-                            <br>
-                            参数说明：支持字符串，布尔类型，长整型，浮点型，整型
+                        <input th:value="*{invokeTarget}" type="text" name="invokeTarget" lay-verify="required" autocomplete="off"  class="layui-input" placeholder="如：sampleTask.dailyStatisticsReport() 或 sampleTask.checkTimeoutDispatch()">
+                        <blockquote class="layui-elem-quote" style="margin-top:8px;">
+                            <b>Bean调用示例：</b>sampleTask.dailyStatisticsReport()<br>
+                            <b>带参数示例：</b>v2Task.runTask2(1,2L,'test',true,2D)<br>
+                            <b>参数说明：</b>支持字符串(String)、布尔(boolean)、长整型(Long带L)、浮点型(Double带D)、整型(Integer)
                         </blockquote>
                     </div>
                 </div>
                 <div class="layui-form-item">
-                    <label class="layui-form-label">cron执行表达式</label>
-                    <div class="layui-input-block">
-                        <input th:value="*{cronExpression}" type="text" name="cronExpression" autocomplete="off" placeholder="cron执行表达式" class="layui-input">
+                    <label class="layui-form-label"><span style="color:red;">*</span> cron表达式</label>
+                    <div class="layui-input-inline" style="width:260px;">
+                        <input th:value="*{cronExpression}" type="text" id="cronExpression" name="cronExpression" lay-verify="required" autocomplete="off" placeholder="如：0 0 2 * * ?" class="layui-input">
+                    </div>
+                    <div class="layui-input-inline" style="width:auto;">
+                        <button type="button" class="pear-btn pear-btn-md pear-btn-primary" id="previewCronBtn">
+                            <i class="layui-icon layui-icon-time"></i> 预览触发时间
+                        </button>
+                    </div>
+                    <div class="layui-input-block" style="margin-left:110px;margin-top:10px;">
+                        <div id="cronPreviewBox" style="display:none;" class="layui-card" >
+                            <div class="layui-card-header" style="padding:8px 15px;font-size:13px;">
+                                <b>最近 5 次触发时间预览</b>
+                            </div>
+                            <div class="layui-card-body" style="padding:10px 15px;">
+                                <ol id="cronPreviewList" style="padding-left:20px;margin:0;line-height:28px;color:#666;"></ol>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="layui-input-block" style="margin-left:110px;margin-top:8px;">
+                        <div style="font-size:12px;color:#999;line-height:22px;">
+                            <b>常用表达式：</b>
+                            <a href="javascript:void(0);" class="cron-tpl" data-cron="0 0 2 * * ?">每天凌晨2点</a> |
+                            <a href="javascript:void(0);" class="cron-tpl" data-cron="0 0 * * * ?">每小时整点</a> |
+                            <a href="javascript:void(0);" class="cron-tpl" data-cron="0 */5 * * * ?">每5分钟</a> |
+                            <a href="javascript:void(0);" class="cron-tpl" data-cron="0 0 0 * * ?">每天零点</a> |
+                            <a href="javascript:void(0);" class="cron-tpl" data-cron="0 30 1 * * ?">每天凌晨1点半</a>
+                        </div>
                     </div>
                 </div>
                 <div class="layui-form-item">
                     <label class="layui-form-label">cron计划策略</label>
-                    <div class=" ">
+                    <div class="layui-input-block">
                         <input th:checked="${SysQuartzJob.misfirePolicy eq '1'}" type="radio"  name="misfirePolicy" value="1" title="立即执行">
                         <input th:checked="${SysQuartzJob.misfirePolicy eq '2'}" type="radio"  name="misfirePolicy" value="2" title="执行一次">
                         <input th:checked="${SysQuartzJob.misfirePolicy eq '3'}" type="radio"  name="misfirePolicy" value="3" title="放弃执行">
@@ -62,7 +85,7 @@
                     <div class="layui-input-block">
                         <select name="concurrent" id="concurrent" th:field="*{concurrent}">
                             <option value="0">允许</option>
-							<option value="1">禁止</option>
+                            <option value="1">禁止</option>
                         </select>
                     </div>
                 </div>
@@ -70,9 +93,15 @@
                     <label class="layui-form-label">任务状态</label>
                     <div class="layui-input-block">
                         <select name="status" id="status" th:field="*{status}">
-                            <option value="0">正常</option>
-							<option value="1">暂停</option>
+                            <option value="0">正常（启用）</option>
+                            <option value="1">暂停</option>
                         </select>
+                    </div>
+                </div>
+                <div class="layui-form-item layui-form-text">
+                    <label class="layui-form-label">备注</label>
+                    <div class="layui-input-block">
+                        <textarea th:value="*{remark}" name="remark" placeholder="请输入备注信息" class="layui-textarea" style="min-height:80px;" th:utext="*{remark}"></textarea>
                     </div>
                 </div>
 
@@ -94,58 +123,101 @@
 </form>
 <th:block th:include="include :: footer"/>
 <script>
-    layui.use(['form', 'jquery'], function () {
+    layui.use(['form', 'jquery', 'layer'], function () {
         let form = layui.form;
         let $ = layui.jquery;
-        let dtree = layui.dtree;
-        let MODULE_PATH = rootPath+"/SysQuartzJobController";
-        //名称验证
-        form.verify({
-            interName: function(value){
-                if(value.length < 2){
-                    return '标题至少得2个字符啊';
-                }
-                var msg = "";
-                $.ajax({
-                    url: MODULE_PATH+'/checkNameUnique',
-                    data: "interName="+value,
-                    dataType: 'json',
-                    type: 'post',
-                    async:false,
-                    success: function (result) {
-                        msg=result;
-                    }
-                });
-                if (msg == 1) {
-                   return "已有相同数据";
-                }
+        let MODULE_PATH = rootPath + "/SysQuartzJobController";
 
+        let initialCron = $("#cronExpression").val().trim();
+        if (initialCron) {
+            previewCron(initialCron);
+        }
+
+        $(".cron-tpl").on('click', function () {
+            let cron = $(this).data('cron');
+            $("#cronExpression").val(cron);
+            previewCron(cron);
+        });
+
+        $("#previewCronBtn").on('click', function () {
+            let cron = $("#cronExpression").val().trim();
+            if (!cron) {
+                layer.msg("请先输入 cron 表达式", {icon: 2, time: 1000});
+                return;
+            }
+            previewCron(cron);
+        });
+
+        $("#cronExpression").on('blur', function () {
+            let cron = $(this).val().trim();
+            if (cron) {
+                previewCron(cron);
             }
         });
 
-        form.on('submit(sysQuartzJob-update)', function (data) {
+        function previewCron(cron) {
+            let loading = layer.load();
             $.ajax({
-                url: MODULE_PATH+'/edit',
-                data: data.field,
+                url: MODULE_PATH + "/cronPreview",
+                data: {cronExpression: cron},
+                dataType: 'json',
+                type: 'get',
+                success: function (result) {
+                    layer.close(loading);
+                    if (result.code == 200) {
+                        let list = result.data || [];
+                        if (list.length == 0) {
+                            layer.msg("该 cron 表达式无可触发的后续时间", {icon: 0, time: 1500});
+                            return;
+                        }
+                        let html = "";
+                        for (let i = 0; i < list.length; i++) {
+                            html += "<li style='color:#009688;font-weight:500;'>第 " + (i + 1) + " 次：" + list[i] + "</li>";
+                        }
+                        $("#cronPreviewList").html(html);
+                        $("#cronPreviewBox").show();
+                    } else {
+                        $("#cronPreviewBox").hide();
+                        layer.msg(result.msg || "cron表达式格式错误", {icon: 2, time: 2000});
+                    }
+                },
+                error: function () {
+                    layer.close(loading);
+                    $("#cronPreviewBox").hide();
+                    layer.msg("预览请求失败，请检查网络", {icon: 2, time: 1500});
+                }
+            })
+        }
+
+        form.on('submit(sysQuartzJob-update)', function (data) {
+            let field = data.field;
+            if (!field.cronExpression || field.cronExpression.trim() == '') {
+                layer.msg("请输入 cron 表达式", {icon: 2, time: 1500});
+                return false;
+            }
+            $.ajax({
+                url: MODULE_PATH + '/edit',
+                data: field,
                 dataType: 'json',
                 contentType: 'application/x-www-form-urlencoded',
                 type: 'post',
                 success: function (result) {
-                    if (result.code==200) {
+                    if (result.code == 200) {
                         layer.msg(result.msg, {icon: 1, time: 1000}, function () {
-                            parent.layer.close(parent.layer.getFrameIndex(window.name));//关闭当前页
+                            parent.layer.close(parent.layer.getFrameIndex(window.name));
                             parent.layui.table.reload("sysQuartzJob-table");
                         });
                     } else {
-                        layer.msg(result.msg, {icon: 2, time: 1000});
+                        layer.msg(result.msg, {icon: 2, time: 1500});
                     }
+                },
+                error: function () {
+                    layer.msg("请求异常，请稍后再试", {icon: 2, time: 1500});
                 }
             })
             return false;
         });
     })
-</script>
-<script>
 </script>
 </body>
 </html>
