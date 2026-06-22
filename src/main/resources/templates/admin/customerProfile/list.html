@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('客户画像')"/>
+</head>
+<body class="pear-container">
+<div class="layui-card">
+    <div class="layui-card-body">
+        <form class="layui-form" action="">
+            <div class="layui-form-item">
+                <label class="layui-form-label">姓名/手机号</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="keyword" id="keyword" placeholder="输入姓名或手机号搜索" class="layui-input">
+                </div>
+
+                <button class="pear-btn pear-btn-md pear-btn-primary" lay-submit lay-filter="profile-query">
+                    <i class="layui-icon layui-icon-search"></i>
+                    查询
+                </button>
+                <button type="reset" class="pear-btn pear-btn-md" id="resetBtn">
+                    <i class="layui-icon layui-icon-refresh"></i>
+                    重置
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="layui-card">
+    <div class="layui-card-body">
+        <table id="profile-table" lay-filter="profile-table"></table>
+    </div>
+</div>
+</body>
+
+<script type="text/html" id="profile-bar">
+    <button class="pear-btn pear-btn-warming pear-btn-sm" lay-event="detail"><i class="layui-icon layui-icon-form"></i></button>
+    <button class="pear-btn pear-btn-primary pear-btn-sm" lay-event="refresh"><i class="layui-icon layui-icon-refresh-1"></i></button>
+</script>
+
+<script type="text/html" id="profile-tags">
+    {{#
+        var tagArr = (d.tags || '').split(',');
+        var html = '';
+        for(var i = 0; i < tagArr.length; i++){
+            if(tagArr[i]){
+                var cls = 'pear-badge-primary';
+                if(tagArr[i]==='VIP') cls = 'pear-badge-warming';
+                else if(tagArr[i]==='投诉过') cls = 'pear-badge-danger';
+                html += '<span class="pear-badge ' + cls + '" style="margin:2px 4px 2px 0;">' + tagArr[i] + '</span>';
+            }
+        }
+        return html || '<span style="color:#999;">无标签</span>';
+    }}
+</script>
+
+<script type="text/html" id="profile-amount">
+    <span style="color:#f56c6c;font-weight:bold;">¥{{ d.totalSpent || '0.00' }}</span>
+</script>
+
+<th:block th:include="include :: footer"/>
+<script>
+    layui.use(['table', 'form', 'jquery'], function () {
+        let table = layui.table;
+        let form = layui.form;
+        let $ = layui.jquery;
+
+        let MODULE_PATH = rootPath + "/CustomerProfileController";
+
+        let cols = [
+            [
+                {title: 'ID', field: 'id', align: 'center', hide: true},
+                {title: '客户姓名', field: 'customerName', align: 'center', width: 120},
+                {title: '客户电话', field: 'customerPhone', align: 'center', width: 130},
+                {title: '首次服务时间', field: 'firstServiceTime', align: 'center', width: 160},
+                {title: '最近服务时间', field: 'lastServiceTime', align: 'center', width: 160},
+                {title: '累计预约', field: 'totalAppointments', align: 'center', width: 100},
+                {title: '累计订单', field: 'totalOrders', align: 'center', width: 100},
+                {title: '累计消费', field: 'totalSpent', align: 'center', width: 120, templet: '#profile-amount'},
+                {title: '标签', field: 'tags', align: 'center', width: 260, templet: '#profile-tags'},
+                {title: '操作', toolbar: '#profile-bar', align: 'center', width: 130}
+            ]
+        ]
+
+        table.render({
+            elem: '#profile-table',
+            url: MODULE_PATH + '/list',
+            page: true,
+            method: 'get',
+            cols: cols,
+            skin: 'line',
+            defaultToolbar: [{
+                layEvent: 'refresh',
+                icon: 'layui-icon-refresh',
+            }, 'filter', 'print', 'exports'],
+            where: {
+                orderByColumn: "last_service_time",
+                isAsc: "desc"
+            }
+        });
+
+        table.on('tool(profile-table)', function (obj) {
+            if (obj.event === 'detail') {
+                window.detail(obj);
+            } else if (obj.event === 'refresh') {
+                window.refreshStats(obj);
+            }
+        });
+
+        table.on('toolbar(profile-table)', function (obj) {
+            if (obj.event === 'refresh') {
+                window.refreshTable();
+            }
+        });
+
+        form.on('submit(profile-query)', function (data) {
+            table.reload('profile-table', {where: data.field});
+            return false;
+        });
+
+        $('#resetBtn').on('click', function () {
+            table.reload('profile-table', {where: {}});
+        });
+
+        window.detail = function (obj) {
+            layer.open({
+                type: 2,
+                title: '客户画像详情',
+                shade: 0.1,
+                area: ['1100px', '750px'],
+                content: MODULE_PATH + '/detail/' + obj.data['id']
+            });
+        }
+
+        window.refreshStats = function (obj) {
+            let loading = layer.load();
+            $.ajax({
+                url: MODULE_PATH + "/refresh/" + obj.data['id'],
+                dataType: 'json',
+                type: 'post',
+                success: function (result) {
+                    layer.close(loading);
+                    if (result.code == 200) {
+                        layer.msg("刷新成功", {icon: 1, time: 1000}, function () {
+                            table.reload('profile-table');
+                        });
+                    } else {
+                        layer.msg(result.msg, {icon: 2, time: 1000});
+                    }
+                }
+            });
+        }
+
+        window.refreshTable = function () {
+            table.reload('profile-table');
+        }
+    })
+</script>
+</html>

@@ -22,6 +22,7 @@ import com.fc.v2.model.auto.TOrder;
 import com.fc.v2.model.auto.TOrderItem;
 import com.fc.v2.model.auto.TPackage;
 import com.fc.v2.model.auto.TPackageItem;
+import com.fc.v2.service.ITCustomerProfileService;
 import com.fc.v2.service.ITOrderService;
 import com.fc.v2.util.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +46,9 @@ public class TOrderServiceImpl extends ServiceImpl<TOrderMapper, TOrder> impleme
 
     @Autowired
     private TPackageMapper tPackageMapper;
+
+    @Autowired
+    private ITCustomerProfileService customerProfileService;
 
     @Override
     public TOrder selectOrderById(Long id) {
@@ -187,6 +191,8 @@ public class TOrderServiceImpl extends ServiceImpl<TOrderMapper, TOrder> impleme
             }
         }
 
+        customerProfileService.refreshOrCreateProfile(tOrder.getCustomerName(), tOrder.getCustomerPhone());
+
         return AjaxResult.success("下单成功");
     }
 
@@ -280,6 +286,7 @@ public class TOrderServiceImpl extends ServiceImpl<TOrderMapper, TOrder> impleme
 
         int result = this.baseMapper.updateById(tOrder);
         if (result > 0) {
+            customerProfileService.refreshOrCreateProfile(existingOrder.getCustomerName(), existingOrder.getCustomerPhone());
             return AjaxResult.success("状态更新成功");
         }
         return AjaxResult.error("状态更新失败");

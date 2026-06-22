@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('客户画像详情')"/>
+    <style>
+        .detail-card {
+            background: #fff;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .detail-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .detail-item {
+            margin-bottom: 10px;
+            display: flex;
+        }
+        .detail-label {
+            width: 120px;
+            color: #666;
+            flex-shrink: 0;
+        }
+        .detail-value {
+            color: #333;
+            flex: 1;
+        }
+        .amount-red {
+            color: #f56c6c;
+            font-weight: bold;
+        }
+        .tag-item {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            margin: 3px 4px 3px 0;
+            font-size: 13px;
+            cursor: default;
+        }
+        .tag-default { background: #e8f4ff; color: #1890ff; }
+        .tag-vip { background: #fff7e6; color: #fa8c16; }
+        .tag-warning { background: #fff1f0; color: #f5222d; }
+        .tag-item .tag-remove {
+            cursor: pointer;
+            margin-left: 4px;
+            font-weight: bold;
+            opacity: 0.6;
+        }
+        .tag-item .tag-remove:hover {
+            opacity: 1;
+        }
+        .tag-add-btn {
+            display: inline-block;
+            padding: 4px 10px;
+            border: 1px dashed #1890ff;
+            border-radius: 4px;
+            color: #1890ff;
+            cursor: pointer;
+            margin: 3px 0;
+            font-size: 13px;
+        }
+        .tag-add-btn:hover {
+            background: #e8f4ff;
+        }
+        .timeline-section {
+            margin-top: 10px;
+        }
+        .timeline-item {
+            display: flex;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .timeline-item:last-child {
+            border-bottom: none;
+        }
+        .timeline-time {
+            width: 150px;
+            color: #999;
+            flex-shrink: 0;
+            font-size: 13px;
+        }
+        .timeline-content {
+            flex: 1;
+        }
+        .timeline-type {
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        .timeline-desc {
+            color: #666;
+            font-size: 13px;
+        }
+        .timeline-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-left: 6px;
+        }
+        .badge-appointment { background: #e8f4ff; color: #1890ff; }
+        .badge-order { background: #f6ffed; color: #52c41a; }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .tab-btn {
+            padding: 8px 20px;
+            cursor: pointer;
+            border: none;
+            background: #f0f0f0;
+            border-radius: 4px 4px 0 0;
+            font-size: 14px;
+        }
+        .tab-btn.active {
+            background: #1890ff;
+            color: #fff;
+        }
+    </style>
+</head>
+<body class="pear-container">
+<div class="detail-card">
+    <div class="detail-title">客户信息</div>
+    <div class="layui-row">
+        <div class="layui-col-md6">
+            <div class="detail-item">
+                <span class="detail-label">客户姓名：</span>
+                <span class="detail-value" th:text="${profile.customerName}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">客户电话：</span>
+                <span class="detail-value" th:text="${profile.customerPhone}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">首次服务时间：</span>
+                <span class="detail-value" th:text="${profile.firstServiceTime} ? ${#dates.format(profile.firstServiceTime, 'yyyy-MM-dd HH:mm:ss')} : '暂无'"></span>
+            </div>
+        </div>
+        <div class="layui-col-md6">
+            <div class="detail-item">
+                <span class="detail-label">最近服务时间：</span>
+                <span class="detail-value" th:text="${profile.lastServiceTime} ? ${#dates.format(profile.lastServiceTime, 'yyyy-MM-dd HH:mm:ss')} : '暂无'"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">累计预约数：</span>
+                <span class="detail-value" th:text="${profile.totalAppointments} ?: 0"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">累计订单数：</span>
+                <span class="detail-value" th:text="${profile.totalOrders} ?: 0"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">累计消费：</span>
+                <span class="detail-value amount-red" th:text="'¥' + ${profile.totalSpent}"></span>
+            </div>
+        </div>
+    </div>
+    <div class="detail-item" style="margin-top: 10px;">
+        <span class="detail-label">备注：</span>
+        <span class="detail-value" th:text="${profile.remark} ?: '无'"></span>
+    </div>
+</div>
+
+<div class="detail-card">
+    <div class="detail-title">标签管理</div>
+    <div id="tagContainer">
+        <span th:each="tag : ${profile.tagList}" class="tag-item"
+              th:classappend="${tag.tagName == 'VIP'} ? 'tag-vip' : (${tag.tagName == '投诉过'} ? 'tag-warning' : 'tag-default')"
+              th:attr="data-id=${tag.id}">
+            <span th:text="${tag.tagName}"></span>
+            <span class="tag-remove" onclick="removeTag(this)">&times;</span>
+        </span>
+        <span class="tag-add-btn" onclick="showAddTag()">+ 添加标签</span>
+    </div>
+</div>
+
+<div class="detail-card">
+    <div class="detail-title">预约与订单时间线</div>
+    <div style="margin-bottom: 10px;">
+        <button class="tab-btn active" onclick="switchTab('all')">全部</button>
+        <button class="tab-btn" onclick="switchTab('appointment')">预约</button>
+        <button class="tab-btn" onclick="switchTab('order')">订单</button>
+    </div>
+
+    <div id="tab-all" class="tab-content active timeline-section">
+        <div th:each="apt : ${profile.appointmentTimeline}" class="timeline-item">
+            <div class="timeline-time" th:text="${apt.appointmentTime} ? ${#dates.format(apt.appointmentTime, 'yyyy-MM-dd HH:mm')} : ''"></div>
+            <div class="timeline-content">
+                <div class="timeline-type">
+                    <span class="timeline-badge badge-appointment">预约</span>
+                    <span th:text="${apt.serviceName} ?: ''"></span>
+                </div>
+                <div class="timeline-desc">
+                    宠物：<span th:text="${apt.petName} ?: ''"></span>
+                    | 状态：<span th:text="${apt.statusName}"></span>
+                    <span th:if="${apt.amount != null}">| 金额：¥<span th:text="${apt.amount}"></span></span>
+                </div>
+            </div>
+        </div>
+        <div th:each="order : ${profile.orderTimeline}" class="timeline-item">
+            <div class="timeline-time" th:text="${order.createTime} ? ${#dates.format(order.createTime, 'yyyy-MM-dd HH:mm')} : ''"></div>
+            <div class="timeline-content">
+                <div class="timeline-type">
+                    <span class="timeline-badge badge-order">订单</span>
+                    <span th:text="${order.orderNo}"></span>
+                </div>
+                <div class="timeline-desc">
+                    金额：¥<span th:text="${order.orderAmount}"></span>
+                    | 状态：<span th:text="${order.statusName}"></span>
+                </div>
+            </div>
+        </div>
+        <div th:if="${#lists.isEmpty(profile.appointmentTimeline) and #lists.isEmpty(profile.orderTimeline)}" style="text-align:center;color:#999;padding:20px;">
+            暂无记录
+        </div>
+    </div>
+
+    <div id="tab-appointment" class="tab-content timeline-section">
+        <div th:each="apt : ${profile.appointmentTimeline}" class="timeline-item">
+            <div class="timeline-time" th:text="${apt.appointmentTime} ? ${#dates.format(apt.appointmentTime, 'yyyy-MM-dd HH:mm')} : ''"></div>
+            <div class="timeline-content">
+                <div class="timeline-type">
+                    <span class="timeline-badge badge-appointment">预约</span>
+                    <span th:text="${apt.serviceName} ?: ''"></span>
+                </div>
+                <div class="timeline-desc">
+                    宠物：<span th:text="${apt.petName} ?: ''"></span>
+                    | 状态：<span th:text="${apt.statusName}"></span>
+                    <span th:if="${apt.amount != null}">| 金额：¥<span th:text="${apt.amount}"></span></span>
+                </div>
+            </div>
+        </div>
+        <div th:if="${#lists.isEmpty(profile.appointmentTimeline)}" style="text-align:center;color:#999;padding:20px;">
+            暂无预约记录
+        </div>
+    </div>
+
+    <div id="tab-order" class="tab-content timeline-section">
+        <div th:each="order : ${profile.orderTimeline}" class="timeline-item">
+            <div class="timeline-time" th:text="${order.createTime} ? ${#dates.format(order.createTime, 'yyyy-MM-dd HH:mm')} : ''"></div>
+            <div class="timeline-content">
+                <div class="timeline-type">
+                    <span class="timeline-badge badge-order">订单</span>
+                    <span th:text="${order.orderNo}"></span>
+                </div>
+                <div class="timeline-desc">
+                    金额：¥<span th:text="${order.orderAmount}"></span>
+                    | 状态：<span th:text="${order.statusName}"></span>
+                </div>
+            </div>
+        </div>
+        <div th:if="${#lists.isEmpty(profile.orderTimeline)}" style="text-align:center;color:#999;padding:20px;">
+            暂无订单记录
+        </div>
+    </div>
+</div>
+</body>
+<th:block th:include="include :: footer"/>
+<script>
+    var profileId = '[[${profile.id}]]';
+    var MODULE_PATH = rootPath + "/CustomerProfileController";
+
+    function switchTab(type) {
+        document.querySelectorAll('.tab-btn').forEach(function(btn) { btn.classList.remove('active'); });
+        document.querySelectorAll('.tab-content').forEach(function(tab) { tab.classList.remove('active'); });
+        event.target.classList.add('active');
+        document.getElementById('tab-' + type).classList.add('active');
+    }
+
+    function showAddTag() {
+        layer.prompt({
+            formType: 0,
+            title: '添加标签',
+            value: '',
+            area: ['300px', '50px']
+        }, function(value, index) {
+            layer.close(index);
+            if (!value || !value.trim()) {
+                layer.msg("标签名称不能为空", {icon: 2});
+                return;
+            }
+            var loading = layer.load();
+            $.ajax({
+                url: MODULE_PATH + "/addTag",
+                data: { profileId: profileId, tagName: value.trim() },
+                dataType: 'json',
+                type: 'post',
+                success: function(result) {
+                    layer.close(loading);
+                    if (result.code == 200) {
+                        layer.msg("添加成功", {icon: 1, time: 1000}, function() {
+                            location.reload();
+                        });
+                    } else {
+                        layer.msg(result.msg, {icon: 2, time: 1000});
+                    }
+                }
+            });
+        });
+    }
+
+    function removeTag(el) {
+        var tagId = el.parentElement.getAttribute('data-id');
+        layer.confirm('确定要删除该标签吗？', {icon: 3, title: '提示'}, function(index) {
+            layer.close(index);
+            var loading = layer.load();
+            $.ajax({
+                url: MODULE_PATH + "/removeTag",
+                data: { tagId: tagId },
+                dataType: 'json',
+                type: 'post',
+                success: function(result) {
+                    layer.close(loading);
+                    if (result.code == 200) {
+                        layer.msg("删除成功", {icon: 1, time: 1000}, function() {
+                            location.reload();
+                        });
+                    } else {
+                        layer.msg(result.msg, {icon: 2, time: 1000});
+                    }
+                }
+            });
+        });
+    }
+</script>
+</html>

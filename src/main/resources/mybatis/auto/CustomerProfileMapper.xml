@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fc.v2.mapper.auto.CustomerProfileMapper">
+
+    <resultMap type="com.fc.v2.model.auto.CustomerProfile" id="CustomerProfileResult">
+        <result property="id"    column="id"    />
+        <result property="customerName"    column="customer_name"    />
+        <result property="customerPhone"    column="customer_phone"    />
+        <result property="firstServiceTime"    column="first_service_time"    />
+        <result property="lastServiceTime"    column="last_service_time"    />
+        <result property="totalAppointments"    column="total_appointments"    />
+        <result property="totalOrders"    column="total_orders"    />
+        <result property="totalSpent"    column="total_spent"    />
+        <result property="tags"    column="tags"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectProfileVo">
+        select id, customer_name, customer_phone, first_service_time, last_service_time,
+               total_appointments, total_orders, total_spent, tags,
+               create_by, create_time, update_by, update_time, remark
+        from t_customer_profile
+    </sql>
+
+    <select id="selectProfileById" resultMap="CustomerProfileResult" parameterType="Long">
+        <include refid="selectProfileVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectProfileByPhone" resultMap="CustomerProfileResult" parameterType="String">
+        <include refid="selectProfileVo"/>
+        where customer_phone = #{customerPhone}
+    </select>
+
+    <select id="selectProfileList" resultMap="CustomerProfileResult">
+        <include refid="selectProfileVo"/>
+        <where>
+            <if test="customerName != null and customerName != ''"> and customer_name like concat('%', #{customerName}, '%')</if>
+            <if test="customerPhone != null and customerPhone != ''"> and customer_phone like concat('%', #{customerPhone}, '%')</if>
+        </where>
+        order by last_service_time desc, create_time desc
+    </select>
+
+    <update id="updateProfileStats" parameterType="Long">
+        update t_customer_profile
+        set total_appointments = (select count(*) from t_appointment where customer_phone = (select customer_phone from t_customer_profile where id = #{id}) and status != '4'),
+            total_orders = (select count(*) from t_order where customer_phone = (select customer_phone from t_customer_profile where id = #{id}) and status != '4'),
+            total_spent = ifnull((select sum(order_amount) from t_order where customer_phone = (select customer_phone from t_customer_profile where id = #{id}) and status in ('1','2','3')), 0),
+            first_service_time = (select min(appointment_time) from t_appointment where customer_phone = (select customer_phone from t_customer_profile where id = #{id}) and status = '3'),
+            last_service_time = (select max(create_time) from (select create_time from t_appointment where customer_phone = (select customer_phone from t_customer_profile where id = #{id}) union all select create_time from t_order where customer_phone = (select customer_phone from t_customer_profile where id = #{id})) t),
+            update_time = now()
+        where id = #{id}
+    </update>
+
+    <select id="selectProfileListByPhoneOrName" resultMap="CustomerProfileResult">
+        <include refid="selectProfileVo"/>
+        where customer_name like concat('%', #{keyword}, '%')
+           or customer_phone like concat('%', #{keyword}, '%')
+        order by last_service_time desc, create_time desc
+    </select>
+
+</mapper>

@@ -14,6 +14,7 @@ import com.fc.v2.model.auto.Appointment;
 import com.fc.v2.model.auto.AppointmentStatus;
 import com.fc.v2.model.auto.ServiceType;
 import com.fc.v2.service.ITAppointmentService;
+import com.fc.v2.service.ITCustomerProfileService;
 import com.fc.v2.service.ITServiceFlowService;
 import com.fc.v2.service.ITServiceTypeService;
 import com.fc.v2.util.DateUtils;
@@ -32,6 +33,9 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
 
     @Autowired
     private ITServiceFlowService serviceFlowService;
+
+    @Autowired
+    private ITCustomerProfileService customerProfileService;
 
     @Override
     public Appointment selectAppointmentById(Long id) {
@@ -82,6 +86,7 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
 
         int result = this.baseMapper.insert(appointment);
         if (result > 0) {
+            customerProfileService.refreshOrCreateProfile(appointment.getCustomerName(), appointment.getCustomerPhone());
             return AjaxResult.success("预约成功");
         }
         return AjaxResult.error("预约失败");
@@ -173,6 +178,10 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
         if (result > 0) {
             if (AppointmentStatus.SERVING.getCode().equals(status)) {
                 serviceFlowService.createFlowNodes(id);
+            }
+            Appointment fullAppointment = this.baseMapper.selectById(id);
+            if (fullAppointment != null) {
+                customerProfileService.refreshOrCreateProfile(fullAppointment.getCustomerName(), fullAppointment.getCustomerPhone());
             }
             return AjaxResult.success("状态更新成功");
         }
