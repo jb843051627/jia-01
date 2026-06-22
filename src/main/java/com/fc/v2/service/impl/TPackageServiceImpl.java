@@ -68,42 +68,16 @@ public class TPackageServiceImpl extends ServiceImpl<TPackageMapper, TPackage> i
     @Override
     @Transactional(rollbackFor = Exception.class)
     public AjaxResult insertPackage(TPackage tPackage) {
-        if (tPackage.getName() == null || tPackage.getName().trim().isEmpty()) {
-            return AjaxResult.error("套餐名称不能为空");
-        }
-        if (tPackage.getItems() == null || tPackage.getItems().isEmpty()) {
-            return AjaxResult.error("请至少选择一个商品");
-        }
-
-        BigDecimal originalPrice = BigDecimal.ZERO;
-        for (TPackageItem item : tPackage.getItems()) {
-            if (item.getServiceTypeId() == null) {
-                return AjaxResult.error("商品ID不能为空");
-            }
-            if (item.getQuantity() == null || item.getQuantity() <= 0) {
-                return AjaxResult.error("商品数量必须大于0");
-            }
-            ServiceType serviceType = serviceTypeMapper.selectServiceTypeById(item.getServiceTypeId());
-            if (serviceType == null) {
-                return AjaxResult.error("商品不存在");
-            }
-            originalPrice = originalPrice.add(serviceType.getPrice().multiply(new BigDecimal(item.getQuantity())));
-        }
-        tPackage.setOriginalPrice(originalPrice);
-        if (tPackage.getPackagePrice() == null) {
-            tPackage.setPackagePrice(originalPrice);
+        AjaxResult validateResult = validateAndSetPrices(tPackage);
+        if (validateResult != null) {
+            return validateResult;
         }
         if (tPackage.getStatus() == null) {
             tPackage.setStatus("0");
         }
 
         this.baseMapper.insert(tPackage);
-
-        for (TPackageItem item : tPackage.getItems()) {
-            item.setId(IdWorker.getId());
-            item.setPackageId(tPackage.getId());
-            tPackageItemMapper.insert(item);
-        }
+        savePackageItems(tPackage.getId(), tPackage.getItems());
 
         return AjaxResult.success("新增套餐成功");
     }
@@ -114,6 +88,19 @@ public class TPackageServiceImpl extends ServiceImpl<TPackageMapper, TPackage> i
         if (tPackage.getId() == null) {
             return AjaxResult.error("套餐ID不能为空");
         }
+        AjaxResult validateResult = validateAndSetPrices(tPackage);
+        if (validateResult != null) {
+            return validateResult;
+        }
+
+        this.baseMapper.updateById(tPackage);
+        tPackageItemMapper.deletePackageItemsByPackageId(tPackage.getId());
+        savePackageItems(tPackage.getId(), tPackage.getItems());
+
+        return AjaxResult.success("修改套餐成功");
+    }
+
+    private AjaxResult validateAndSetPrices(TPackage tPackage) {
         if (tPackage.getName() == null || tPackage.getName().trim().isEmpty()) {
             return AjaxResult.error("套餐名称不能为空");
         }
@@ -140,16 +127,15 @@ public class TPackageServiceImpl extends ServiceImpl<TPackageMapper, TPackage> i
             tPackage.setPackagePrice(originalPrice);
         }
 
-        this.baseMapper.updateById(tPackage);
+        return null;
+    }
 
-        tPackageItemMapper.deletePackageItemsByPackageId(tPackage.getId());
-        for (TPackageItem item : tPackage.getItems()) {
+    private void savePackageItems(Long packageId, List<TPackageItem> items) {
+        for (TPackageItem item : items) {
             item.setId(IdWorker.getId());
-            item.setPackageId(tPackage.getId());
+            item.setPackageId(packageId);
             tPackageItemMapper.insert(item);
         }
-
-        return AjaxResult.success("修改套餐成功");
     }
 
     @Override
